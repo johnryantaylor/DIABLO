@@ -40,7 +40,6 @@ The points outside the domain are ghost cells and are used to apply the desired 
  GYF(NY-2)         --- 
   
 
-
  GYF(j+1)          ---
                     *            GY(j+1)
  GYF(j)            ---
