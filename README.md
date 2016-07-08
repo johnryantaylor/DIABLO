@@ -16,11 +16,17 @@ channel.f       Periodic (spectral) in x and z, FD in y (done)
 duct.f          Periodic (spectral) in x, FD in z and y (not done)
 cavity.f        FD in x, y, and z (not done)
 
+User editable subroutines:
+set_ics.f       Prescribe the initial conditions for velocity and scalars
+save_stats.f    Calculate statistics during the simulation
+courant.f       Set the dynamic timestep (optional) based on the CFL number
+user_rhs.f      Add forcing terms to the right hand side for momentum and scalars
+
 In order to run a new case do the following steps:
 1.  Create a new run directory
 2.  Copy the grid* and input* from an existing case directory and edit them as desired
 3.  In the diablo/pre_process directory run create_grid_*.m in matlab or octave to create a new grid for each direction using finite differences (non periodic) and move the created *grid.txt files to the new case directory.
-4.  Inside the appropriate timestepping subroutine, edit the create_flow_* subroutine to have the desired initial conditions.
+4.  Edit set_ics.f to set the desired initial conditions.
 5.  Edit the script “setup_run” and set the rundir variable to match the new directory.
 6.  Run “setup_run”.  This will create an executable called “diablo” in your run directory.
 7.  Run the code from inside the run directory.  For example, if using MPI, you could do “mpirun -np diablo >output.dat &” which will run a job in the background and write the output to the file output.dat
