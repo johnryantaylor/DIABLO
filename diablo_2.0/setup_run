@@ -1,0 +1,30 @@
+#!/bin/bash
+rundir=/data/proteus/jrt51/KH_test
+codedir=./for
+
+echo $rundir
+
+# copy grid files from run dir
+cd $codedir
+cp $rundir/grid* ./
+
+# load any module files that you need
+module load diablo_2d
+module load ifort
+module load hdf5/parallel
+module load mpich/3.0.4
+
+# compile the code
+make
+
+# copy the executable back to the run dir
+cp diablo $rundir/diablo
+
+# to run the code, you could do one of the following
+# cd $rundir
+# for parallel run:
+# mpirun -np 4 diablo >output.dat &
+# for serial run:
+# diablo >output.dat &
+
+
