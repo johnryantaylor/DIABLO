@@ -1,0 +1,302 @@
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! header, the header file for diablo.                              VERSION 0.3f
+! This file contains definitions of global parameters and global variables.
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      IMPLICIT NONE
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Spatial resolution parameters
+! (We hardwire these into the code so that the compiler may perform
+!  optimizations based on the grid size at compile time).
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      INTEGER   NX, NY, NZ, N_TH
+      INCLUDE   'grid_def'
+
+      INCLUDE   'header_mpi'
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Derived constants
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+
+      INTEGER NKX, NKY, NKZ
+      PARAMETER(NKX=NX/3,NKY=NY/3,NKZ=NZ/3)
+      INTEGER  NXM, NYM, NZM, TNKY,TNKZ
+      PARAMETER(NXM=NX-1)
+      PARAMETER(NYM=NY-1)
+      PARAMETER(NZM=NZ-1)
+      PARAMETER(TNKY=2*NKY)
+      PARAMETER(TNKZ=2*NKZ)
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Input parameters and runtime variables
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      LOGICAL USE_MPI
+      CHARACTER*35 FLAVOR
+      CHARACTER*10 MPI_IO_NUM
+      REAL*8  NU, LX, LY, LZ, DELTA_T, KICK, UBULK0, PX0
+      REAL*8  U_BC_XMIN_C1, U_BC_XMIN_C2, U_BC_XMIN_C3
+      REAL*8  V_BC_XMIN_C1, V_BC_XMIN_C2, V_BC_XMIN_C3
+      REAL*8  W_BC_XMIN_C1, W_BC_XMIN_C2, W_BC_XMIN_C3
+      REAL*8  U_BC_YMIN_C1, U_BC_YMIN_C2, U_BC_YMIN_C3
+      REAL*8  V_BC_YMIN_C1, V_BC_YMIN_C2, V_BC_YMIN_C3
+      REAL*8  W_BC_YMIN_C1, W_BC_YMIN_C2, W_BC_YMIN_C3
+      REAL*8  U_BC_ZMIN_C1, U_BC_ZMIN_C2, U_BC_ZMIN_C3
+      REAL*8  V_BC_ZMIN_C1, V_BC_ZMIN_C2, V_BC_ZMIN_C3
+      REAL*8  W_BC_ZMIN_C1, W_BC_ZMIN_C2, W_BC_ZMIN_C3
+      REAL*8  TH_BC_XMIN_C1(1:N_TH), TH_BC_XMIN_C2(1:N_TH)
+     &         , TH_BC_XMIN_C3(1:N_TH)
+      REAL*8  TH_BC_YMIN_C1(1:N_TH), TH_BC_YMIN_C2(1:N_TH)
+     &         , TH_BC_YMIN_C3(1:N_TH)
+      REAL*8  TH_BC_ZMIN_C1(1:N_TH), TH_BC_ZMIN_C2(1:N_TH)
+     &         , TH_BC_ZMIN_C3(1:N_TH)
+      REAL*8  U_BC_XMAX_C1, U_BC_XMAX_C2, U_BC_XMAX_C3
+      REAL*8  V_BC_XMAX_C1, V_BC_XMAX_C2, V_BC_XMAX_C3
+      REAL*8  W_BC_XMAX_C1, W_BC_XMAX_C2, W_BC_XMAX_C3
+      REAL*8  U_BC_YMAX_C1, U_BC_YMAX_C2, U_BC_YMAX_C3
+      REAL*8  V_BC_YMAX_C1, V_BC_YMAX_C2, V_BC_YMAX_C3
+      REAL*8  W_BC_YMAX_C1, W_BC_YMAX_C2, W_BC_YMAX_C3
+      REAL*8  U_BC_ZMAX_C1, U_BC_ZMAX_C2, U_BC_ZMAX_C3
+      REAL*8  V_BC_ZMAX_C1, V_BC_ZMAX_C2, V_BC_ZMAX_C3
+      REAL*8  W_BC_ZMAX_C1, W_BC_ZMAX_C2, W_BC_ZMAX_C3
+      REAL*8  TH_BC_XMAX_C1(1:N_TH), TH_BC_XMAX_C2(1:N_TH)
+     &         , TH_BC_XMAX_C3(1:N_TH)
+      REAL*8  TH_BC_YMAX_C1(1:N_TH), TH_BC_YMAX_C2(1:N_TH)
+     &         , TH_BC_YMAX_C3(1:N_TH)
+      REAL*8  TH_BC_ZMAX_C1(1:N_TH), TH_BC_ZMAX_C2(1:N_TH)
+     &         , TH_BC_ZMAX_C3(1:N_TH)
+      REAL*8  CFL 
+      REAL*8  BETA
+
+      INTEGER NX_T,NY_T,NZ_T
+      INTEGER N_TIME_STEPS, NUM_PER_DIR, TIME_AD_METH, VERBOSITY  
+      INTEGER SAVE_FLOW_INT, SAVE_STATS_INT, IC_TYPE, F_TYPE
+      INTEGER U_BC_XMIN, V_BC_XMIN, W_BC_XMIN, TH_BC_XMIN(1:N_TH)
+      INTEGER U_BC_XMAX, V_BC_XMAX, W_BC_XMAX, TH_BC_XMAX(1:N_TH)
+      INTEGER U_BC_YMIN, V_BC_YMIN, W_BC_YMIN, TH_BC_YMIN(1:N_TH)
+      INTEGER U_BC_YMAX, V_BC_YMAX, W_BC_YMAX, TH_BC_YMAX(1:N_TH)
+      INTEGER U_BC_ZMIN, V_BC_ZMIN, W_BC_ZMIN, TH_BC_ZMIN(1:N_TH)
+      INTEGER U_BC_ZMAX, V_BC_ZMAX, W_BC_ZMAX, TH_BC_ZMAX(1:N_TH)
+      INTEGER PREVIOUS_TIME_STEP
+      INTEGER UPDATE_DT
+      LOGICAL VARIABLE_DT,FIRST_TIME 
+      LOGICAL MOVIE,CREATE_NEW_FLOW
+      COMMON /INPUT /    
+     &  TH_BC_XMIN_C1, TH_BC_XMIN_C2, TH_BC_XMIN_C3,
+     &  TH_BC_YMIN_C1, TH_BC_YMIN_C2, TH_BC_YMIN_C3,
+     &  TH_BC_ZMIN_C1, TH_BC_ZMIN_C2, TH_BC_ZMIN_C3,
+     &  TH_BC_XMAX_C1, TH_BC_XMAX_C2, TH_BC_XMAX_C3,
+     &  TH_BC_YMAX_C1, TH_BC_YMAX_C2, TH_BC_YMAX_C3,
+     &  TH_BC_ZMAX_C1, TH_BC_ZMAX_C2, TH_BC_ZMAX_C3,
+     &  TH_BC_XMIN,TH_BC_XMAX,U_BC_XMIN, V_BC_XMIN, W_BC_XMIN,
+     &  TH_BC_YMIN,TH_BC_YMAX,U_BC_YMIN, V_BC_YMIN, W_BC_YMIN,
+     &  TH_BC_ZMIN,TH_BC_ZMAX,U_BC_ZMIN, V_BC_ZMIN, W_BC_ZMIN,
+     &  U_BC_XMAX, V_BC_XMAX, W_BC_XMAX, 
+     &  U_BC_YMAX, V_BC_YMAX, W_BC_YMAX, 
+     &  U_BC_ZMAX, V_BC_ZMAX, W_BC_ZMAX, 
+     &  U_BC_XMIN_C1, U_BC_XMIN_C2, U_BC_XMIN_C3,
+     &  V_BC_XMIN_C1, V_BC_XMIN_C2, V_BC_XMIN_C3,
+     &  W_BC_XMIN_C1, W_BC_XMIN_C2, W_BC_XMIN_C3,
+     &  U_BC_YMIN_C1, U_BC_YMIN_C2, U_BC_YMIN_C3,
+     &  V_BC_YMIN_C1, V_BC_YMIN_C2, V_BC_YMIN_C3,
+     &  W_BC_YMIN_C1, W_BC_YMIN_C2, W_BC_YMIN_C3,
+     &  U_BC_ZMIN_C1, U_BC_ZMIN_C2, U_BC_ZMIN_C3,
+     &  V_BC_ZMIN_C1, V_BC_ZMIN_C2, V_BC_ZMIN_C3,
+     &  W_BC_ZMIN_C1, W_BC_ZMIN_C2, W_BC_ZMIN_C3,
+     &  U_BC_YMAX_C1, U_BC_YMAX_C2, U_BC_YMAX_C3,
+     &  V_BC_YMAX_C1, V_BC_YMAX_C2, V_BC_YMAX_C3,
+     &  W_BC_YMAX_C1, W_BC_YMAX_C2, W_BC_YMAX_C3,
+     &  NU, BETA, LX, LY, LZ, DELTA_T, KICK, UBULK0, PX0,
+     &  N_TIME_STEPS, NUM_PER_DIR, TIME_AD_METH, VERBOSITY,
+     &  SAVE_FLOW_INT, SAVE_STATS_INT, IC_TYPE, F_TYPE, CFL,
+     &  PREVIOUS_TIME_STEP, MOVIE, CREATE_NEW_FLOW,
+     &  UPDATE_DT,VARIABLE_DT,FIRST_TIME,USE_MPI,
+     &  FLAVOR, MPI_IO_NUM
+
+      REAL*8  TIME
+      INTEGER TIME_STEP, RK_STEP
+      COMMON /RUNTIME_VARS/ TIME, 
+     &        TIME_STEP, RK_STEP, NX_T, NY_T, NZ_T
+
+      REAL*8  XcMovie, YcMovie, ZcMovie
+      INTEGER NxMovie, NyMovie, NzMovie, RankYMovie, RankZMovie
+      COMMON /MOVIE/  XcMovie, YcMovie, ZcMovie,
+     &       NxMovie, NyMovie, NzMovie, RankYMovie, RankZMovie
+
+      INTEGER TIME_ARRAY(8)
+      REAL*8 START_TIME,END_TIME,TIME_LIMIT
+      COMMON /TIMINGS/ START_TIME,END_TIME,TIME_LIMIT
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|! Parameters for scalar advection
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8  RI(1:N_TH), PR(1:N_TH)
+      LOGICAL CREATE_NEW_TH(1:N_TH), BACKGROUND_GRAD(1:N_TH)
+      INTEGER NUM_READ_TH
+      INTEGER READ_TH_INDEX(1:N_TH)
+      LOGICAL FILTER_TH(1:N_TH)
+      INTEGER FILTER_INT(1:N_TH)
+      INTEGER JSTART_TH(1:N_TH),JEND_TH(1:N_TH)
+
+      COMMON /SCALAR_VARS/
+     &          RI,PR,JSTART_TH, JEND_TH, NUM_READ_TH,
+     &          FILTER_INT,READ_TH_INDEX,
+     &          CREATE_NEW_TH, FILTER_TH, BACKGROUND_GRAD 
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|! Parameters for oscillatory pressure forcing
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8 OMEGA0, AMP_OMEGA0
+      COMMON /OSCILL_VARS/
+     &          OMEGA0, AMP_OMEGA0
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|! Parameters for rotating flows
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8 I_RO, GRAV_X, GRAV_Y, GRAV_Z
+      COMMON /GEOPHYS_VARS/
+     &         I_RO, GRAV_X, GRAV_Y, GRAV_Z
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|! Parameters for Low Reynolds number periodic advection
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8 EK0,EK,EPSILON_TARGET
+      COMMON /STIRRING_VARS/
+     &        EK0,EK,EPSILON_TARGET
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|! Parameters for Large Eddy Simulation
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      LOGICAL LES
+      INTEGER LES_MODEL_TYPE
+      REAL*8 NU_T (0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 KAPPA_T (0:NX+1,0:NZP+1,0:NY+1,1:N_TH)
+      INTEGER J1,J2
+      COMMON /LES_VARS/
+     &   NU_T,KAPPA_T,LES_MODEL_TYPE,J1,J2,LES
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! RKW3 parameters
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8  H_BAR(3), BETA_BAR(3), ZETA_BAR(3)
+      COMMON /RKW3_PARAMS/ H_BAR, BETA_BAR, ZETA_BAR
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! FFT parameters
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8  KX  (0:NXP), KY  (0:2*NKY), KZ  (0:2*NKZ),
+     &        KX2 (0:NXP), KY2 (0:2*NKY), KZ2 (0:2*NKZ),
+     &        PI, EPS, RNX, RNY, RNZ
+      COMPLEX*16 CIKX(0:NXP), CIKY(0:2*NKY), CIKZ(0:2*NKZ), CI,
+     &           CZX_PLANE(0:NZ,0:NKX), CYZ_PLANE(0:NY,0:2*NKZ)
+      INTEGER*8  FFTW_X_TO_P_PLAN, FFTW_X_TO_F_PLAN,
+     &           FFTW_Y_TO_P_PLAN, FFTW_Y_TO_F_PLAN,
+     &           FFTW_Z_TO_P_PLAN, FFTW_Z_TO_F_PLAN
+
+      COMMON /FFT_PARAMS/ 
+     &                  KX, KY, KZ, KX2, KY2, KZ2,
+     &                  PI, EPS, RNX, RNY, RNZ, CIKX, CIKY, CIKZ, CI,
+     &                  CZX_PLANE, CYZ_PLANE,
+     &                  FFTW_X_TO_P_PLAN, FFTW_X_TO_F_PLAN,
+     &                  FFTW_Y_TO_P_PLAN, FFTW_Y_TO_F_PLAN,
+     &                  FFTW_Z_TO_P_PLAN, FFTW_Z_TO_F_PLAN
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Grid parameters
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8  GX(0:NX+1), GY(0:NY+1), GZ(0:NZ+1),
+     &        DX(0:NX+1), DY(0:NY+1), DZ(0:NZ+1),
+     &        GXF(0:NX+1),  GYF(0:NY+1),  GZF(0:NZ+1),
+     &        DXF(0:NX+1),  DYF(0:NY+1),  DZF(0:NZ+1)
+      INTEGER JSTART,JEND
+
+      COMMON /GRID_PARAMS/ GX,  GY,  GZ,  DX,  DY,  DZ,
+     &                     GXF, GYF, GZF, DXF, DYF, DZF,
+     &                     JSTART, JEND
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Global variables
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8  U1 (0:NX+1,0:NZP+1,0:NY+1), U2 (0:NX+1,0:NZP+1,0:NY+1),
+     &        U3 (0:NX+1,0:NZP+1,0:NY+1), P  (0:NX+1,0:NZP+1,0:NY+1),
+     &        R1 (0:NX+1,0:NZP+1,0:NY+1), R2 (0:NX+1,0:NZP+1,0:NY+1),
+     &        R3 (0:NX+1,0:NZP+1,0:NY+1), F1 (0:NX+1,0:NZP+1,0:NY+1),
+     &        F2 (0:NX+1,0:NZP+1,0:NY+1), F3 (0:NX+1,0:NZP+1,0:NY+1),
+     &        S1 (0:NX+1,0:NZP+1,0:NY+1), 
+     &        TH (0:NX+1,0:NZP+1,0:NY+1,1:N_TH),
+     &        FTH (0:NX+1,0:NZP+1,0:NY+1,1:N_TH), 
+     &        RTH (0:NX+1,0:NZP+1,0:NY+1,1:N_TH)
+
+      REAL*8     MATL (0:NX-1,0:NY+1), MATD(0:NX-1,0:NY+1),
+     &     MATU(0:NX-1,0:NY+1), VEC(0:NX-1,0:NY+1)
+      REAL*8     MATL_t (0:NX-1,0:NY+1), MATD_t(0:NX-1,0:NY+1),
+     &     MATU_t(0:NX-1,0:NY+1)
+      COMPLEX*16 VEC_C(0:NXP,0:NY+1)
+      REAL*8     MATL_C(0:NXP,0:NY+1),MATD_C(0:NXP,0:NY+1),
+     &     MATU_C(0:NXP,0:NY+1)
+
+      COMPLEX*16 CU1(0:NXP,0:NZ+1,0:NY+1),
+     &           CU2(0:NXP,0:NZ+1,0:NY+1), 
+     &           CU3(0:NXP,0:NZ+1,0:NY+1), 
+     &           CP (0:NXP,0:NZ+1,0:NY+1),
+     &           CR1(0:NXP,0:NZ+1,0:NY+1), 
+     &           CR2(0:NXP,0:NZ+1,0:NY+1),
+     &           CR3(0:NXP,0:NZ+1,0:NY+1), 
+     &           CF1(0:NXP,0:NZ+1,0:NY+1),
+     &           CF2(0:NXP,0:NZ+1,0:NY+1), 
+     &           CF3(0:NXP,0:NZ+1,0:NY+1),
+     &           CS1(0:NXP,0:NZ+1,0:NY+1), 
+     &           CTH(0:NXP,0:NZ+1,0:NY+1,1:N_TH),
+     &           CFTH(0:NXP,0:NZ+1,0:NY+1,1:N_TH), 
+     &           CRTH(0:NXP,0:NZ+1,0:NY+1,1:N_TH)
+
+      EQUIVALENCE (U1,CU1)
+     &          , (U2,CU2)
+     &          , (U3,CU3)
+     &          , (R1,CR1)
+     &          , (R2,CR2)
+     &          , (R3,CR3)
+     &          , (F1,CF1)
+     &          , (F2,CF2)
+     &          , (F3,CF3)
+     &          , (P,CP)
+     &          , (S1,CS1)
+!     &          , (RTH,CRTH)
+!     &          , (TH,CTH)
+!     &          , (FTH,CFTH)
+
+      COMMON /GLOBAL_VARS/ U1,U2,U3,P,R1,R2,R3,F1,F2,F3,S1,TH,FTH,RTH
+     &                 ,CTH,CFTH,CRTH
+
+! Variables for outputting statistics
+      REAL*8 UBAR(0:NY+1),VBAR(0:NY+1),WBAR(0:NY+1)
+      REAL*8 URMS(0:NY+1),VRMS(0:NY+1),WRMS(0:NY+1)
+      REAL*8 UME (0:NY+1),VME (0:NY+1),WME (0:NY+1)
+      REAL*8 UV(0:NY+1),UW(0:NY+1),WV(0:NY+1)
+      REAL*8 DUDY(0:NY+1),DWDY(0:NY+1)
+      REAL*8 URMS_B,VRMS_B,WRMS_B,TKE_B
+      REAL*8 SHEAR(0:NY+1)
+      REAL*8 OMEGA_X(0:NY+1),OMEGA_Y(0:NY+1),OMEGA_Z(0:NY+1)
+
+! Variables needed for SAVE_STATS_TH
+      REAL*8 THBAR(0:NY+1,1:N_TH),THRMS_B(1:N_TH)
+     &       ,THRMS(0:NY+1,1:N_TH),THME(0:NY+1,1:N_TH)
+      REAL*8 THV(0:NY+1,1:N_TH),DTHDY(0:NY+1,1:N_TH)
+      REAL*8 PE_DISS(0:NY+1,1:N_TH)
+
+! Variables for tkebudget
+      REAL*8 EPSILON(0:NY+1)
+
+      INTEGER NSAMPLES
+
+      COMMON /STAT_VARS/ THBAR, THRMS, UBAR, VBAR, WBAR, URMS, URMS_B,
+     &          VRMS_B,WRMS_B,TKE_B,WRMS, VRMS,UV,WV,UW, NSAMPLES
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Variable viscosity parameters
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8 NU_V_SCALE
+      COMMON /VARIABLE_VISC/
+     &      NU_V_SCALE
+
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Background scalar gradient
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      REAL*8 DRHODX(1:N_TH),DRHODZ(1:N_TH)
+      COMMON /DRHODX_VARS/
+     &     DRHODX,DRHODZ
+

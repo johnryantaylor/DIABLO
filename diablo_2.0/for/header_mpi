@@ -1,0 +1,19 @@
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|! MPI variables
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+      INCLUDE 'mpif.h'
+	
+      INTEGER :: NPROCS, RANK
+      INTEGER :: RANKY,RANKZ,MPI_COMM_Y,MPI_COMM_Z
+      INTEGER :: status(MPI_STATUS_SIZE), IERROR
+      INTEGER :: PNY,JOFF,NPROCY,NPROCZ,NXP,NZP, NXPP
+      INTEGER :: XY2ZY_1,XY2ZY_2
+
+      INCLUDE 'grid_mpi'
+
+      PARAMETER(NXP=NX/(2*NPROCZ))
+      PARAMETER(NZP=NZ/(  NPROCZ))
+
+      COMMON /MPI_VARS/ RANK,RANKY,RANKZ,MPI_COMM_Y,MPI_COMM_Z,STATUS,
+     &       IERROR,PNY,JOFF, NXPP
+      COMMON /MPI_DATA/ XY2ZY_1,XY2ZY_2
+

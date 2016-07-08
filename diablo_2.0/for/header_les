@@ -1,0 +1,40 @@
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Parameters for Large Eddy Simulation
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+
+! Variables for dynamic Smagrinsky
+      REAL*8 TEMP(0:NX+1,0:NZP+1,0:NY+1)
+      COMPLEX*16 CTEMP(0:NXP,0:NZ+1,0:NY+1)
+
+! Variables for plane-averaged momentum budget
+      real*8 NU_U1(0:NY+1)
+      real*8 NU_U3(0:NY+1)
+
+      REAL*8 cross
+
+      REAL*8 Sij1(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 Sij2(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 Sij3(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 Sij4(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 Sij5(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 Sij6(0:NX+1,0:NZP+1,0:NY+1)
+
+      COMPLEX*16 CSij1(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSij2(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSij3(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSij4(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSij5(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSij6(0:NXP,0:NZ+1,0:NY+1)
+
+      EQUIVALENCE (TEMP,CTEMP)
+     &         ,(Sij1,CSij1)
+     &         ,(Sij2,CSij2)
+     &         ,(Sij3,CSij3)
+     &         ,(Sij4,CSij4)
+     &         ,(Sij5,CSij5)
+     &         ,(Sij6,CSij6)
+
+      COMMON /LES_VARS_2/ Sij1, Sij2, Sij3, Sij4, Sij5, Sij6, TEMP
+
+
+
