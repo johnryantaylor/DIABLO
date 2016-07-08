@@ -1,0 +1,60 @@
+C A data file for diablo.  This is a generic, easy method of data
+C input, as long as you don't change the number of comment lines.
+C Note that the grid size is defined in the file grid_def.
+C VERSION
+    2.0
+C TIME_AD_METH
+      1              
+C LES:   LES_MODEL_TYPE
+               1            
+C ICs:    IC_TYPE,    KICK
+              3       0.1
+C Rotation:  I_RO (or Coriolis parameter, f)
+               0.0    
+C Upward vertical vector components, GRAV_X, GRAV_Y, GRAV_Z
+                                       0.0     1.0    0.0 
+C Forcing:      F_TYPE,    UBULK0,   PX0,    OMEGA0,   AMP_OMEGA0
+                  3         0.0     -1.0      6.28        0.0
+C BCs: U_BC_YMIN, U_BC_YMIN_C1, U_BC_YMIN_C2, U_BC_YMIN_C3
+           1           0.0             0.0           0.0  
+C BCs: V_BC_YMIN, V_BC_YMIN_C1, V_BC_YMIN_C2, V_BC_YMIN_C3
+           0           0.0             0.0           0.0  
+C BCs: W_BC_YMIN, W_BC_YMIN_C1, W_BC_YMIN_C2, W_BC_YMIN_C3
+           1           0.0             0.0           0.0  
+C BCs: U_BC_YMAX, U_BC_YMAX_C1, U_BC_YMAX_C2, U_BC_YMAX_C3
+           1           0.0             0.0           0.0  
+C BCs: V_BC_YMAX, V_BC_YMAX_C1, V_BC_YMAX_C2, V_BC_YMAX_C3
+           0           0.0             0.0           0.0  
+C BCs: W_BC_YMAX, W_BC_YMAX_C1, W_BC_YMAX_C2, W_BC_YMAX_C3
+           1           0.0             0.0           0.0  
+C Here include 6*N_TH lines, see below for format
+C BCs: TH_BC_YMIN(1), TH_BC_YMIN_C1(1), TH_BC_YMIN_C2(1), TH_BC_YMIN_C3(1)
+           1           0.0             0.0           0.0
+C BCs: TH_BC_YMAX(1), TH_BC_YMAX_C1(1), TH_BC_YMAX_C2(1), TH_BC_YMAX_C3(1)
+           1           0.0             0.0           0.0
+C Background scalar gradients, DRHODX(1), DRHODZ(1)
+           0.0         0.0 
+
+
+C Description
+C For channnel flows (NUM_PER_DIR=2):
+C IC_TYPE specifies the functional form for the initial velocity
+C KICK is a scale factor on the noise added when creating a new flow.
+C F_TYPE=0 gives constant mass flux flow (maintaining UBULK0).
+C F_TYPE=1 gives constant pressure gradient flow (PX0 constant).
+C F_TYPE=2 is for an oscillatory pressure gradient of the form:
+C            PX0+AMP_OMEGA0*cos(OMEGA0*TIME)
+C U_BC_YMIN is the BC TYPE on the U velocity component at the lower wall
+C    (0 for Dirichlet, 1 for Neumann)
+C U_BC_YMIN_C1 is the value of the velocity (if Dirichlet) or it's gradient (if Neumann)
+
+C When including scalar advection, include 4 lines like the following for each scalar
+
+C BCs: TH_BC_YMIN(1), TH_BC_YMIN_C1(1), TH_BC_YMIN_C2(1), TH_BC_YMIN_C3(1)
+           1           0.0             0.0           0.0
+C BCs: TH_BC_YMAX(1), TH_BC_YMAX_C1(1), TH_BC_YMAX_C2(1), TH_BC_YMAX_C3(1)
+           1           0.0             0.0           0.0
+
+
+
+
