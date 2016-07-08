@@ -6,7 +6,7 @@
 ! are in Fourier space.  The velocity and scalars are available 
 ! in physical space.
 ! S1 is available as a working variable
-
+! DAN TEST
        integer i,j,k,n
 
        real*8 alpha
