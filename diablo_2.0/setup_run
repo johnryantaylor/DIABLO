@@ -26,5 +26,3 @@ cp diablo $rundir/diablo
 # mpirun -np 4 diablo >output.dat &
 # for serial run:
 # diablo >output.dat &
-
-# a test comment
