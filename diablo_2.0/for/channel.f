@@ -3149,10 +3149,15 @@ C Now, set only the mean
 C Neumann
          DO K=0,TNKZ
            DO I=0,NXP-1
-             CU1(I,K,1)=CU1(I,K,2)-DY(2)*U_BC_YMIN_C1
-             CU1(I,K,0)=CU1(I,K,1)-DY(1)*U_BC_YMIN_C1
+             CU1(I,K,1)=CU1(I,K,2)
+             CU1(I,K,0)=CU1(I,K,1)
            END DO
          END DO
+C Now, Apply BC to mean
+         IF (RANKZ.EQ.0) THEN
+           CU1(0,0,1)=CU1(0,0,2)+DY(2)*U_BC_YMIN_C1
+           CU1(0,0,0)=CU1(0,0,1)+DY(1)*U_BC_YMIN_C1
+         END IF
       ELSE
          STOP 'Error: U_BC_YMIN must be 0, or 1'
       END IF
@@ -3175,10 +3180,15 @@ C Now, set only the mean
 C Neumann
          DO K=0,TNKZ
            DO I=0,NXP-1
-             CU3(I,K,1)=CU3(I,K,2)-DY(2)*W_BC_YMIN_C1
-             CU3(I,K,0)=CU3(I,K,1)-DY(1)*W_BC_YMIN_C1
+             CU3(I,K,1)=CU3(I,K,2)
+             CU3(I,K,0)=CU3(I,K,1)
            END DO
          END DO
+C Now, Apply BC to mean
+         IF (RANKZ.EQ.0) THEN
+           CU3(0,0,1)=CU3(0,0,2)+DY(2)*W_BC_YMIN_C1
+           CU3(0,0,0)=CU3(0,0,1)+DY(1)*W_BC_YMIN_C1
+         END IF
       ELSE
          STOP 'Error: W_BC_YMIN must be 0, or 1' 
       END IF
@@ -3196,10 +3206,15 @@ C Set the vertical velocity at GYF(1) (halfway between GY(2) and GY(1))
 C Neumann
          DO K=0,TNKZ
            DO I=0,NXP-1
-             CU2(I,K,1)=CU2(I,K,2)-DYF(1)*V_BC_YMIN_C1 
-             CU2(I,K,0)=CU2(I,K,1)-DYF(1)*V_BC_YMIN_C1 
+             CU2(I,K,1)=CU2(I,K,2)
+             CU2(I,K,0)=CU2(I,K,1)
            END DO
          END DO
+         IF (RANKZ.EQ.0) THEN
+           CU2(0,0,1)=CU2(0,0,2)-DYF(1)*V_BC_YMIN_C1 
+           CU2(0,0,0)=CU2(0,0,1)-DYF(1)*V_BC_YMIN_C1 
+         END IF
+
       ELSE IF (V_BC_YMIN.EQ.2) THEN
 C Upstream-travelling wave proposed by Speyer/Kim
 C (initialize as zero)
@@ -3239,10 +3254,15 @@ C Now, set only the mean
 C Neumann
          DO K=0,TNKZ
            DO I=0,NXP-1
-             CU1(I,K,NY)=CU1(I,K,NY-1)+DY(NY)*U_BC_YMAX_C1
-             CU1(I,K,NY+1)=CU1(I,K,NY)+DY(NY)*U_BC_YMAX_C1
+             CU1(I,K,NY)=CU1(I,K,NY-1)
+             CU1(I,K,NY+1)=CU1(I,K,NY)
            END DO
          END DO
+C Now, Apply BC to mean
+         IF (RANKZ.EQ.0) THEN
+           CU1(0,0,NY)=CU1(0,0,NY-1)+DY(NY)*U_BC_YMAX_C1
+           CU1(0,0,NY+1)=CU1(0,0,NY)+DY(NY)*U_BC_YMAX_C1
+         END IF
       ELSE
          STOP 'Error: U_BC_YMAX must be 0, or 1'
       END IF
@@ -3267,10 +3287,15 @@ C Ghost cell not used
 C Neumann
          DO K=0,TNKZ
            DO I=0,NXP-1
-             CU3(I,K,NY)=CU3(I,K,NY-1)+DY(NY)*W_BC_YMAX_C1
-             CU3(I,K,NY+1)=CU3(I,K,NY)+DY(NY)*W_BC_YMAX_C1
+             CU3(I,K,NY)=CU3(I,K,NY-1)
+             CU3(I,K,NY+1)=CU3(I,K,NY)
            END DO
          END DO
+C Now, Apply BC to mean
+         IF (RANKZ.EQ.0) THEN
+           CU3(0,0,NY)=CU3(0,0,NY-1)+DY(NY)*W_BC_YMAX_C1
+           CU3(0,0,NY+1)=CU3(0,0,NY)+DY(NY)*W_BC_YMAX_C1
+         END IF
       ELSE
         STOP 'Error: W_BC_YMAX must be 0, or 1'
       END IF
@@ -3287,9 +3312,14 @@ C Set the vertical velocity at GYF(NY) (halfway between GY(NY) and GY(NY+1))
 C Neumann
          DO K=0,TNKZ
            DO I=0,NXP-1
-             CU2(I,K,NY+1)=CU2(I,K,NY)+DYF(NY)*V_BC_YMAX_C1
+             CU2(I,K,NY)=CU2(I,K,NY-1)
+             CU2(I,K,NY+1)=CU2(I,K,NY)
            END DO
          END DO
+C Now, Apply BC to mean
+         IF (RANKZ.EQ.0) THEN
+           CU2(0,0,NY+1)=CU2(0,0,NY)+DY(NY)*V_BC_YMAX_C1
+         END IF
       ELSE IF (V_BC_YMAX.EQ.2) THEN
 C Upstream-travelling wave proposed by Speyer/Kim
 C (initialize as zero gradient)
@@ -3300,6 +3330,7 @@ C (initialize as zero gradient)
 
       RETURN
       END
+
 
 C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       SUBROUTINE THOMAS_REAL(A,B,C,G,NY,NX)
