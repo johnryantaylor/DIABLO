@@ -47,7 +47,7 @@ C if for the subgrid scalar dissipation
 ! We are on a middle process
             J1=JSTART
             J2=JEND
-      END
+      END IF
 
 ! First, for all models, apply boundary conditions to the velocity field
 ! (fill ghost cells) to ensure accurate calculation of gradients
