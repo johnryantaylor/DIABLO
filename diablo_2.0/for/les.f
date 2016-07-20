@@ -12,7 +12,7 @@ C if for the subgrid scalar dissipation
       include 'header'
       include 'header_les'
 
-      integer i,j,k,l,m,ij
+      integer i,j,k,l,m,ij,J1,J2
 
       real*8 S1_mean(0:NY+1)
       real*8 NU_T_mean(0:NY+1)
@@ -33,6 +33,21 @@ C if for the subgrid scalar dissipation
       parameter (alpha_sgs=2.449d0)
 ! beta is the LES/grid filter width ratio
       parameter (beta_sgs=1.d0)
+
+! Set the indices that are used when adding the off-diagnoal SGS stress terms
+      IF (RANKY.eq.NPROCY-1) then
+! We are at the upper wall
+            J1=JSTART
+            J2=NY-1
+      ELSE IF (RANKY.eq.0) then
+! We are at the lower wall
+            J1=2
+            J2=JEND
+      ELSE
+! We are on a middle process
+            J1=JSTART
+            J2=JEND
+      END
 
 ! First, for all models, apply boundary conditions to the velocity field
 ! (fill ghost cells) to ensure accurate calculation of gradients
@@ -232,7 +247,7 @@ C Apply Boundary conditions to velocity field
 ! Now, add the subgrid scale forcing to CFi
 ! (This includes the subgrid scale stress as an explicit R-K term
 
-      DO J=JSTART,JEND
+      DO J=J1,J2
         DO K=0,TNKZ
           DO I=0,NXP-1
             CF1(I,K,J)=CF1(I,K,J)
