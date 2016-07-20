@@ -12,7 +12,7 @@ C if for the subgrid scalar dissipation
       include 'header'
       include 'header_les'
 
-      integer i,j,k,l,m,ij,J1,J2
+      integer i,j,k,l,m,ij
 
       real*8 S1_mean(0:NY+1)
       real*8 NU_T_mean(0:NY+1)
