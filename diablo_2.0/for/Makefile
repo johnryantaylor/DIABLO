@@ -10,8 +10,7 @@
 COMPILER = ifort
 
 # Any desired options for the compiler (e.g. -O2, -g, etc.)
-#USEROPTS = -O3 -fpp -mcmodel=medium -u
-USEROPTS = -fpp -check bounds
+USEROPTS = -O3 -fpp -mcmodel=medium -u
 
 # Location where fftw and netcdf (optional) libraries are installed
 LINKDIR = /mhome/damtp/atmos/jrt51/local/lib
