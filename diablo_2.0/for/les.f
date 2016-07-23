@@ -60,6 +60,64 @@ C Apply Boundary conditions to velocity field
         CALL APPLY_BC_VEL_UPPER
       END IF
 
+! If we are using Neuman boundary conditions, over-write the values of the
+! velocity at the ghost cells so that the LES model doesn't use the large
+! velocity gradient
+      IF (U_BC_YMAX.eq.1) THEN
+        IF (USE_MPI) THEN
+          IF (RANKY.eq.NPROCY-1) THEN
+! We are on process at the upper wall
+            U1(I,K,NY)=U1(I,K,NY-1)    
+            U1(I,K,NY+1)=U1(I,K,NY-1)    
+          END IF
+        ELSE
+! For serial version:
+          U1(I,K,NY)=U1(I,K,NY-1)    
+          U1(I,K,NY+1)=U1(I,K,NY-1)    
+        END IF
+      END IF
+      IF (U_BC_YMIN.eq.1) THEN
+        IF (USE_MPI) THEN 
+          ELSE IF (RANKY.eq.0) THEN
+! We are on a process at the bottom wall          
+            U1(I,K,1)=U1(I,K,2)
+            U1(I,K,0)=U1(I,K,2)
+          END IF
+        ELSE
+! For serial version:
+          U1(I,K,1)=U1(I,K,2)
+          U1(I,K,0)=U1(I,K,2)
+        END IF
+      END IF
+
+      IF (W_BC_YMAX.eq.1) THEN
+        IF (USE_MPI) THEN
+          IF (RANKY.eq.NPROCY-1) THEN
+! We are on process at the upper wall
+            U3(I,K,NY)=U3(I,K,NY-1)    
+            U3(I,K,NY+1)=U3(I,K,NY-1)    
+          END IF
+        ELSE
+! For serial version:
+          U3(I,K,NY)=U3(I,K,NY-1)    
+          U3(I,K,NY+1)=U3(I,K,NY-1)    
+        END IF
+      END IF
+      IF (W_BC_YMIN.eq.1) THEN
+        IF (USE_MPI) THEN 
+          ELSE IF (RANKY.eq.0) THEN
+! We are on a process at the bottom wall          
+            U3(I,K,1)=U3(I,K,2)
+            U3(I,K,0)=U3(I,K,2)
+          END IF
+        ELSE
+! For serial version:
+          U3(I,K,1)=U3(I,K,2)
+          U3(I,K,0)=U3(I,K,2)
+        END IF
+      END IF
+
+
       if (LES_MODEL_TYPE.EQ.1) then
 !     Constant Smagorinsky model
 
