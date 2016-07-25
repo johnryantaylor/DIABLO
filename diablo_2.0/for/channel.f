@@ -8,6 +8,9 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
 C This subroutine initializes various variables for the serial channel
 C flow subroutine. This is not called if MPI is turned on
 C Initialize any constants here
+
+C Test of a change
+
       INCLUDE 'header'
       INTEGER I,J,K,N
 
