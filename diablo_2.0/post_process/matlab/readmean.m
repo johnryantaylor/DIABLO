@@ -10,7 +10,7 @@ NP=2;
 %NY_S=input('Insert the number of points per process in the y-direction: ');
 NY_S=33;
 % Enter the number of scalars
-N_TH=3;
+N_TH=1;
 % Enter the viscosity from input.dat
 NU=0.001;
 % Enter the Prandtl number
