@@ -1465,11 +1465,11 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
             NzMovie    = NzMovie-RankZMovie*NZP
 
             RankYMovie=-1
-            IF (GYF(JSTART).LE.YcMovie .and. GYF(JEND).GE.YcMovie) THEN
+            IF (GYF(JSTART).LE.YcMovie.and.GYF(JEND+1).GT.YcMovie) THEN
                RankYMovie=RANKY
                I=1
                do while(.not.
-     &              (GYF(I).LE.YcMovie .and. GYF(I+1).GE.YcMovie))
+     &              (GYF(I).LE.YcMovie .and. GYF(I+1).GT.YcMovie))
                   I=I+1
                end do
                NyMovie=I;
