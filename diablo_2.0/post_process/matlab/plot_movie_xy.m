@@ -19,7 +19,7 @@ k
     timename=[int2str(k)];
   end
 
-varname=['/th2_xy/' timename];
+varname=['/th1_xy/' timename];
 %varname=['/nu_t_xy/' timename];
 
 A=h5read(filename,varname);
