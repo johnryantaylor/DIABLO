@@ -78,7 +78,7 @@ C Apply Boundary conditions to velocity field
       END IF
       IF (U_BC_YMIN.eq.1) THEN
         IF (USE_MPI) THEN 
-          ELSE IF (RANKY.eq.0) THEN
+          IF (RANKY.eq.0) THEN
 ! We are on a process at the bottom wall          
             U1(I,K,1)=U1(I,K,2)
             U1(I,K,0)=U1(I,K,2)
@@ -105,7 +105,7 @@ C Apply Boundary conditions to velocity field
       END IF
       IF (W_BC_YMIN.eq.1) THEN
         IF (USE_MPI) THEN 
-          ELSE IF (RANKY.eq.0) THEN
+          IF (RANKY.eq.0) THEN
 ! We are on a process at the bottom wall          
             U3(I,K,1)=U3(I,K,2)
             U3(I,K,0)=U3(I,K,2)
