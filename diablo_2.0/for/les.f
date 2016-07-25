@@ -437,9 +437,9 @@ C For use in the LES model in channel flow (2 periodic directions)
       DO J=1,NY+1
         DO K=0,TNKZ
           DO I=0,NXP-1
-            CSij6(I,K,J)=0.5d0*((CU1(I,K,J)-CU1(I,K,J-1))/DY(j)
+            CSij4(I,K,J)=0.5d0*((CU1(I,K,J)-CU1(I,K,J-1))/DY(j)
      &                          +CIKX(I)*CU2(I,K,J) ) 
-            CSij4(I,K,J)=0.5d0*(CIKZ(K)*CU2(I,K,J)
+            CSij6(I,K,J)=0.5d0*(CIKZ(K)*CU2(I,K,J)
      &                         +(CU3(I,K,J)-CU3(I,K,J-1))/DY(j) )
           END DO
         END DO
