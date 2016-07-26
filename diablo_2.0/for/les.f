@@ -63,60 +63,7 @@ C Apply Boundary conditions to velocity field
 ! If we are using Neuman boundary conditions, over-write the values of the
 ! velocity at the ghost cells so that the LES model doesn't use the large
 ! velocity gradient
-      IF (U_BC_YMAX.eq.1) THEN
-        IF (USE_MPI) THEN
-          IF (RANKY.eq.NPROCY-1) THEN
-! We are on process at the upper wall
-            U1(I,K,NY)=U1(I,K,NY-1)    
-            U1(I,K,NY+1)=U1(I,K,NY-1)    
-          END IF
-        ELSE
-! For serial version:
-          U1(I,K,NY)=U1(I,K,NY-1)    
-          U1(I,K,NY+1)=U1(I,K,NY-1)    
-        END IF
-      END IF
-      IF (U_BC_YMIN.eq.1) THEN
-        IF (USE_MPI) THEN 
-          IF (RANKY.eq.0) THEN
-! We are on a process at the bottom wall          
-            U1(I,K,1)=U1(I,K,2)
-            U1(I,K,0)=U1(I,K,2)
-          END IF
-        ELSE
-! For serial version:
-          U1(I,K,1)=U1(I,K,2)
-          U1(I,K,0)=U1(I,K,2)
-        END IF
-      END IF
-
-      IF (W_BC_YMAX.eq.1) THEN
-        IF (USE_MPI) THEN
-          IF (RANKY.eq.NPROCY-1) THEN
-! We are on process at the upper wall
-            U3(I,K,NY)=U3(I,K,NY-1)    
-            U3(I,K,NY+1)=U3(I,K,NY-1)    
-          END IF
-        ELSE
-! For serial version:
-          U3(I,K,NY)=U3(I,K,NY-1)    
-          U3(I,K,NY+1)=U3(I,K,NY-1)    
-        END IF
-      END IF
-      IF (W_BC_YMIN.eq.1) THEN
-        IF (USE_MPI) THEN 
-          IF (RANKY.eq.0) THEN
-! We are on a process at the bottom wall          
-            U3(I,K,1)=U3(I,K,2)
-            U3(I,K,0)=U3(I,K,2)
-          END IF
-        ELSE
-! For serial version:
-          U3(I,K,1)=U3(I,K,2)
-          U3(I,K,0)=U3(I,K,2)
-        END IF
-      END IF
-
+      CALL APPLY_BC_LES
 
       if (LES_MODEL_TYPE.EQ.1) then
 !     Constant Smagorinsky model
@@ -310,11 +257,11 @@ C Apply Boundary conditions to velocity field
           DO I=0,NXP-1
             CF1(I,K,J)=CF1(I,K,J)
      &                -CIKX(I)*CSij1(I,K,J)
-!     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
+     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
      &                -CIKZ(K)*CSij5(I,K,J)
             CF3(I,K,J)=CF3(I,K,J)
      &                -CIKX(I)*CSij5(I,K,J)
-!     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
+     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
      &                -CIKZ(K)*CSij3(I,K,J)   
           END DO
         END DO
@@ -324,7 +271,7 @@ C Apply Boundary conditions to velocity field
          DO I=0,NXP-1
            CF2(I,K,J)=CF2(I,K,J)
      &                -CIKX(I)*CSij4(I,K,J)
-!     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
+     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
      &                -CIKZ(K)*CSij6(I,K,J)
           END DO
         END DO
@@ -690,6 +637,103 @@ C For use in the LES model in channel flow (2 periodic directions)
 
       return
       end
+
+      SUBROUTINE APPLY_BC_LES
+      include header
+      integer i,j,k
+
+! If we are using Neuman boundary conditions, over-write the values of the
+! velocity at the ghost cells so that the LES model doesn't use the large
+! velocity gradient
+      IF (U_BC_YMAX.eq.1) THEN
+        IF (USE_MPI) THEN
+          IF (RANKY.eq.NPROCY-1) THEN
+! We are on process at the upper wall
+            DO K=0,NZP-1
+              DO I=0,NXM
+                U1(I,K,NY)=U1(I,K,NY-1)    
+                U1(I,K,NY+1)=U1(I,K,NY-1)    
+              END DO
+            END DO
+          END IF
+        ELSE
+! For serial version:
+          DO K=0,NZM
+            DO I=0,NXM
+              U1(I,K,NY)=U1(I,K,NY-1)    
+              U1(I,K,NY+1)=U1(I,K,NY-1)    
+            END DO
+          END DO
+        END IF
+      END IF
+      IF (U_BC_YMIN.eq.1) THEN
+        IF (USE_MPI) THEN 
+          IF (RANKY.eq.0) THEN
+! We are on a process at the bottom wall          
+            DO K=0,NZP-1
+              DO I=0,NXM
+                U1(I,K,1)=U1(I,K,2)
+                U1(I,K,0)=U1(I,K,2)
+              END DO
+            END DO
+          END IF
+        ELSE
+! For serial version:
+          DO K=0,NZM
+            DO I=0,NXM
+              U1(I,K,1)=U1(I,K,2)
+              U1(I,K,0)=U1(I,K,2)
+            END DO
+          END DO
+        END IF
+      END IF
+
+      IF (W_BC_YMAX.eq.1) THEN
+        IF (USE_MPI) THEN
+          IF (RANKY.eq.NPROCY-1) THEN
+! We are on process at the upper wall
+            DO K=0,NZP-1
+              DO I=0,NXM
+                U3(I,K,NY)=U3(I,K,NY-1)    
+                U3(I,K,NY+1)=U3(I,K,NY-1)    
+              END DO
+            END DO
+          END IF
+        ELSE
+! For serial version:
+          DO K=0,NZM
+            DO I=0,NXM
+              U3(I,K,NY)=U3(I,K,NY-1)    
+              U3(I,K,NY+1)=U3(I,K,NY-1)    
+            END DO
+          END DO
+        END IF
+      END IF
+      IF (W_BC_YMIN.eq.1) THEN
+        IF (USE_MPI) THEN 
+          IF (RANKY.eq.0) THEN
+! We are on a process at the bottom wall          
+            DO K=0,NZP-1
+              DO I=0,NXM
+                U3(I,K,1)=U3(I,K,2)
+                U3(I,K,0)=U3(I,K,2)
+              END DO 
+            END DO
+          END IF
+        ELSE
+! For serial version:
+          DO K=0,NZM
+            DO I=0,NXM
+              U3(I,K,1)=U3(I,K,2)
+              U3(I,K,0)=U3(I,K,2)
+            END DO
+          END DO
+        END IF
+      END IF
+
+      RETURN
+      END
+
 
 
 
