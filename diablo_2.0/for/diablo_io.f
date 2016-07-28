@@ -440,14 +440,14 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       call WALL_TIME(END_TIME)
       if (END_TIME-START_TIME.gt.TIME_LIMIT) THEN
          IF (RANK.EQ.0) 
-     &        write(*,*) ' STOP beacuse of wall-time hit!'
+     &        write(*,*) ' STOP because of wall-time hit!'
          FLAG=.TRUE.
       END IF
       
       INQUIRE(FILE="stop.now", EXIST=FILE_EXISTS)
       IF ( FILE_EXISTS ) THEN
          IF (RANK.EQ.0) 
-     &        write(*,*) ' STOP beacuse of stop.now file!'
+     &        write(*,*) ' STOP because of stop.now file!'
          FLAG=.TRUE.
       END IF
       
@@ -458,10 +458,8 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
 
       subroutine wall_time(wt)
 c
-c     Return wall-clock time as seconds after Jan. 1, 2014.
+c     Return wall-clock time as seconds after Jan. 1, 2016.
 c     Support for leap year is not included anymore.
-c
-c     Next leap year is 2016!
 c
 c     By using a 'save' statement, the wall-time after the first
 c     call to the subroutine could be computed, but that is not
@@ -514,8 +512,8 @@ c
 c
 c     And compute wall-clock time
 c
-      wt = (val(1)-2014)*365*86400+
-     &     day*86400+val(5)*3600+val(6)*60+val(7)+val(8)/1000.
+      wt = (val(1)-2016)*365*86400+
+     &     day*86400+val(5)*3600+val(6)*60+val(7)+dble(val(8)/1000.d0)
 
       end 
 
