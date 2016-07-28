@@ -6,9 +6,9 @@ if (~exist(base_dir))
 end
 % Set the grid and domain size in the y-direction
 %NP=input('Enter the number of processes in the y-direction: ');
-NP=2;
+NP=4;
 %NY_S=input('Insert the number of points per process in the y-direction: ');
-NY_S=33;
+NY_S=17;
 % Enter the number of scalars
 N_TH=1;
 % Enter the viscosity from input.dat
@@ -37,10 +37,10 @@ if (proc==1)
   jstart=1;
   jend=NY_S;
 elseif (proc~=NP)
-  jstart=(NY_S-1)*(proc-2)+NY_S;
+  jstart=(NY_S-1)*(proc-2)+NY_S+1;
   jend=(NY_S-1)*(proc-1)+NY_S;
 else
-  jstart=(NY_S-1)*(proc-2)+NY_S;
+  jstart=(NY_S-1)*(proc-2)+NY_S+1;
   jend=(NY_S-1)*(proc-1)+NY_S;
 end
 
@@ -50,6 +50,7 @@ NY=(NY_S-1)*(NP-1)+(NY_S);
 % Determine the number of records in the file based on its length
 nk=floor(length(turbo(:,1))/(NY_S+2));
 
+
 row=1;
 for k=1:nk
   tii(k)=turbo(row,2);
@@ -57,6 +58,9 @@ for k=1:nk
   row=row+1;
   ubulk(k)=turbo(row,1);
   row=row+1;
+
+  if (proc>1) row=row+1; end %Skip the bottom row which we already read in
+
   for j=jstart:jend
     gyf(j)=turbo(row,2);
     ume(j,k)=turbo(row,3);
@@ -101,6 +105,7 @@ for k=1:nk_th
   ubulk(k)=turbo_th(row,1);
   row=row+1;
   for n=1:N_TH
+  if (proc>1) row=row+1; end %Skip the bottom row which we already read in
   for j=jstart:jend
     thme(j,k,n)=turbo_th(row,3);
     dthdy(j,k,n)=turbo_th(row,4); % Add one here if a background was subtracted
