@@ -14,6 +14,7 @@
  disp('1) High resolution at both ends (tanh stretching function)');
  disp('2) High resolution in center (tanh stretching function)');
  disp('3) High resolution at both ends (starting at 0)');
+ disp('4) High resolution at the top for surface boundary layer');
  GRID_TYPE=input('Select a grid type: ');
 
 % Set the dimensions of the grid 
@@ -40,6 +41,12 @@ elseif (GRID_TYPE==3)
   for J=1:N+1
     G(J+1)=(L/2.0)*tanh(CS*((2.0*(J-1))/(N)-1.0))/tanh(CS)+L/2.0;
   end
+elseif (GRID_TYPE==4)
+% Surface boundary layer
+  for J=1:N+1
+    G(J+1)=L*tanh(CS*((N-(J-1))/N-1.0))/tanh(CS)+L;
+  end
+  G(:)=G(:)*-1;
 else
    disp('Error, entered grid type unknown');
 end
