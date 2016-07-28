@@ -85,21 +85,6 @@ C A flag to determine if we are considering the first time-step
         TIME=TIME+DELTA_T
         FIRST_TIME=.FALSE.
 
-C If Variable timestepping and done with one full R-K step, update
-C DELTA_T based on the specified CFL number
-C This is not parallelized and should be used only in the serial
-C version to ensure that each process uses the same timestep
-      IF ((NUM_PER_DIR.eq.2).and.(VARIABLE_DT)
-     &        .and.(MOD(TIME_STEP,UPDATE_DT).EQ.0)) THEN
-        CALL FFT_XZ_TO_PHYSICAL(CU1,U1,0,NY+1)
-        CALL FFT_XZ_TO_PHYSICAL(CU2,U2,0,NY+1)
-        CALL FFT_XZ_TO_PHYSICAL(CU3,U3,0,NY+1)
-        CALL COURANT
-        CALL FFT_XZ_TO_FOURIER(U1,CU1,0,NY+1)
-        CALL FFT_XZ_TO_FOURIER(U2,CU2,0,NY+1)
-        CALL FFT_XZ_TO_FOURIER(U3,CU3,0,NY+1)
-      END IF
-
 ! Save statistics to an output file
         IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
             CALL SAVE_STATS(.FALSE.)
