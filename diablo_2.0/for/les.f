@@ -121,7 +121,7 @@ C Apply Boundary conditions to velocity field
           DO I=0,NXM
             Sij1(I,K,J)=S1(I,K,J)*Sij1(I,K,J)
             Sij5(I,K,J)=S1(I,K,J)*Sij5(I,K,J)
-! CSij(:,:,:,2) is added through an implicit eddy viscosity
+! Sij2 is added through an implicit eddy viscosity
             Sij2(I,K,J)=0.d0
             Sij3(I,K,J)=S1(I,K,J)*Sij3(I,K,J)
           END DO
@@ -175,44 +175,21 @@ C Apply Boundary conditions to velocity field
       DO J=2,NY
         DO K=0,NZP-1
           DO I=0,NXM
-           NU_T(I,K,J)=-0.5d0*DELTA_Y(J)*S1(I,K,J)
+           NU_T(I,K,J)=-0.5d0*DELTA_Y(J)*TEMP(I,K,J)
           END DO
         END DO
       END DO
 
-! If we are at the top boundary, set NU_T(NY,NY+1)=0
-      IF (RANKY.eq.NPROCY-1) then
-       DO K=0,NZP-1
-        DO I=0,NXM
-          NU_T(I,K,NY)=0.d0
-          NU_T(I,K,NY+1)=0.d0
-! Set ghost cell    
-          NU_T(I,K,1)=NU_T(I,K,2) 
-        END DO
-       END DO
-      ELSE IF (RANKY.eq.0) THEN
-! If we are at the bottom boundary, set NU_T(NY=1,2)=0   
-       DO K=0,NZP-1
-        DO I=0,NXM
-          NU_T(I,K,1)=0.d0
-          NU_T(I,K,2)=0.d0
-! Set ghost cell    
-          NU_T(I,K,NY+1)=NU_T(I,K,NY) 
-        END DO
-       END DO
-      ELSE
-! Else we are a middle process
-! Set ghost cells    
-       DO K=0,NZP-1
-        DO I=0,NXM
-          NU_T(I,K,1)=NU_T(I,K,2) 
-          NU_T(I,K,NY+1)=NU_T(I,K,NY) 
-        END DO
-       END DO
-      END IF
+! Now that we have calculated NU_T, set the value at the ghost cells
+! by sharing with neighboring processes.  This subroutine also sets
+! the value of NU_T to zero at both walls
+      CALL GHOST_LES_MPI
+
+! Convert the stress tensor to Fourier space
 
       CALL FFT_XZ_TO_FOURIER(Sij1,CSij1,0,NY+1)
-      CALL FFT_XZ_TO_FOURIER(Sij2,CSij2,0,NY+1)
+! Sij2 is added through an implicit eddy viscosity
+!      CALL FFT_XZ_TO_FOURIER(Sij2,CSij2,0,NY+1)
       CALL FFT_XZ_TO_FOURIER(Sij3,CSij3,0,NY+1)
       CALL FFT_XZ_TO_FOURIER(Sij4,CSij4,0,NY+1)
       CALL FFT_XZ_TO_FOURIER(Sij5,CSij5,0,NY+1)
@@ -225,12 +202,12 @@ C Apply Boundary conditions to velocity field
             CSij1(I,K,J)=DELTA_YF(J)*CSij1(I,K,J)
             CSij5(I,K,J)=DELTA_YF(J)*CSij5(I,K,J)
 ! CSij2(:,:,:) is added through an implicit eddy viscosity
-            CSij2(I,K,J)=DELTA_YF(J)*CSij2(I,K,J)
+!            CSij2(I,K,J)=DELTA_YF(J)*CSij2(I,K,J)
             CSij3(I,K,J)=DELTA_YF(J)*CSij3(I,K,J)
           END DO
         END DO
       END DO
-      DO J=1,NY+1
+      DO J=2,NY+1
         DO K=0,TNKZ
           DO I=0,NXP-1
             CSij4(I,K,J)=DELTA_Y(J)*CSij4(I,K,J)
@@ -271,7 +248,8 @@ C Apply Boundary conditions to velocity field
          DO I=0,NXP-1
            CF2(I,K,J)=CF2(I,K,J)
      &                -CIKX(I)*CSij4(I,K,J)
-     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
+! Sij2 is added through an implict eddy viscosity
+!     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
      &                -CIKZ(K)*CSij6(I,K,J)
           END DO
         END DO
@@ -639,7 +617,7 @@ C For use in the LES model in channel flow (2 periodic directions)
       end
 
       SUBROUTINE APPLY_BC_LES
-      include header
+      include 'header'
       integer i,j,k
 
 ! If we are using Neuman boundary conditions, over-write the values of the
