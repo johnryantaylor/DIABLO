@@ -16,7 +16,7 @@
 ! send and recieve.
 ! The communication will be done in Fourier space, so these arrays should
 ! be complex arrays to match the velocity
-! The size of the buffer arrys is 0:NKX,0:TNKZ,# of variables
+! The size of the buffer array is 0:NKX,0:TNKZ,# of variables
       COMPLEX*16 OCPACK(0:NXP-1,0:TNKZ,4+N_TH)
       COMPLEX*16 ICPACK(0:NXP-1,0:TNKZ,4+N_TH)
 
@@ -172,6 +172,154 @@
             DO N=1,N_TH
               CTH(I,K,NY+1,N)=ICPACK(I,K,4+N)
             END DO
+          END DO
+        END DO
+      END IF
+
+      END IF
+
+      RETURN
+      END
+
+
+      SUBROUTINE GHOST_LES_MPI
+! This subroutine is part of the MPI package for the LES subroutine
+! Here, after calculating the SGS viscosity, NU_T on each core,
+! We need to share the ghost cells between neighboring processors
+
+      include 'header'
+
+      integer i,j,k,N
+
+! Define the arrays that will be used for data packing.  This makes the
+! communication between processes more efficient by only requiring one
+! send and recieve.
+! The communication will be done in Fourier space, so these arrays should
+! be complex arrays to match the velocity
+! The size of the buffer array is 0:NXM,0:NZP-1
+      REAL*8 OCPACK(0:NXM,0:NZP-1)
+      REAL*8 ICPACK(0:NXM,0:NZP-1)
+
+! If we are using more than one processor, then we need to pass data
+
+      IF (NPROCY.gt.1) THEN
+
+! First, Pass data up the chain to higher ranked processes
+
+      IF (RANKY.eq.0) THEN
+! If we are the lowest ranked process, then we don't need to recieve
+! data at the lower ghost cells. Instead, set NU_T=0 at the lower wall
+        DO K=0,NZP-1
+          DO I=0,NXM
+            NU_T(I,K,1)=0.d0
+            NU_T(I,K,2)=0.d0
+          END DO
+        END DO
+
+! Pass data up to the next process from GY(NY)
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=NU_T(I,K,NY)
+          END DO
+        END DO
+! Now, we have packed the data into a compact array, pass the data up
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,1,MPI_COMM_Y,IERROR)
+
+! End if RANK=0
+      ELSE IF (RANKY.lt.NPROCY-1) THEN
+! Here, we are one of the middle processes and we need to pass data
+! up and recieve data from below
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=NU_T(I,K,NY)
+          END DO
+        END DO
+! Use MPI_SENDRECV since we need to recieve and send data
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,1,MPI_COMM_Y,IERROR)
+
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,1,MPI_COMM_Y,STATUS,IERROR)
+! Now, unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            NU_T(I,K,1)=ICPACK(I,K)
+          END DO
+        END DO
+
+      ELSE
+! Otherwise, we must be the uppermost process with RANK=NPROCS-1
+! Here, we need to recieve data from below, but don't need to send data up
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,1,MPI_COMM_Y,STATUS,IERROR)
+! Unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            NU_T(I,K,1)=ICPACK(I,K)
+          END DO
+        END DO
+      END IF
+      
+! Now, we have hit the top process.  Set the BCs and pass data down
+
+      IF (RANKY.eq.NPROCY-1) THEN
+! If we are the higest ranked process, then we don't need to recieve
+! data at the upper ghost cells.
+! Set NU_T=0 at the upper wall
+        DO K=0,NZP-1
+          DO I=0,NXM
+            NU_T(I,K,NY)=0.d0
+            NU_T(I,K,NY+1)=0.d0
+          END DO
+        END DO
+
+! Now, send data down the chain
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=NU_T(I,K,2)
+          END DO
+        END DO
+! Now, we have packed the data into a compact array, pass the data up
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,3,MPI_COMM_Y,IERROR)
+      ELSE IF (RANKY.GT.0) THEN
+! Here, we are one of the middle processes and we need to pass data
+! down and recieve data from above us
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=NU_T(I,K,2)
+          END DO
+        END DO
+
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,3,MPI_COMM_Y,IERROR)
+
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,3,MPI_COMM_Y,STATUS,IERROR)
+! Now, unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            NU_T(I,K,NY+1)=ICPACK(I,K)
+          END DO
+        END DO
+      ELSE
+! Here, we must be the lowest process (RANK=0) and we need to recieve
+! data from above
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,3,MPI_COMM_Y,STATUS,IERROR)
+! Unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            NU_T(I,K,NY+1)=ICPACK(I,K)
           END DO
         END DO
       END IF
@@ -539,8 +687,6 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-----|
      *                FFTW_OUT_OF_PLACE=0,  FFTW_IN_PLACE=8,
      *                FFTW_USE_WISDOM=16,   FFTW_THREADSAFE=128 )
 
-
-
 ! This subroutine initializes all mpi variables
 
 c$$$      integer(C_INTPTR_T) :: L,M
@@ -549,15 +695,13 @@ c$$$      complex(C_DOUBLE_COMPLEX), pointer :: data(:,:)
 c$$$      integer(C_INTPTR_T) :: i, j, alloc_local, local_M, local_j_offset
 c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
 
-
       CALL MPI_INIT(IERROR)
       CALL MPI_COMM_SIZE(MPI_COMM_WORLD,IPROCS,IERROR)
       CALL MPI_COMM_RANK(MPI_COMM_WORLD,RANK,IERROR)
 
-      ! NPROCY=2
       IF (NPROCS.NE.IPROCS) THEN
-         IF (RANK.EQ.0) WRITE(*,*) ' NPROCS is not equal to',
-     &        ' the number of processes which we run on. '
+         IF (RANK.EQ.0) WRITE(*,*) 'ERROR: compiled with ',NPROCS,
+     &        'cores, running with ',IPROCS,' cores.'
          CALL MPI_FINALIZE(ierror)
          stop 
       END IF
@@ -568,7 +712,6 @@ c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
          CALL MPI_FINALIZE(ierror)
          stop 
       END IF
-      ! NPROCSZ=NPROCS/NPROCY
 
       DIMS(2)=NPROCY
       DIMS(1)=NPROCZ
