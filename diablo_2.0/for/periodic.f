@@ -399,19 +399,19 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       INCLUDE 'header'
       INTEGER I,J,K
 
-         IF (FLAVOR.NE.'Ensemble') WRITE (6,*) 'Fourier in X'
+         WRITE (6,*) 'Fourier in X'
          DO I=0,NX
            GX(I)=(I*LX)/NX
            DX(I)=LX/NX
            IF (VERBOSITY .GT. 3) WRITE(6,*) 'GX(',I,') = ',GX(I)
          END DO
-         IF (FLAVOR.NE.'Ensemble') WRITE (6,*) 'Fourier in Z'
+         WRITE (6,*) 'Fourier in Z'
          DO K=0,NZ
            GZ(K)=(K*LZ)/NZ
            DZ(K)=LZ/NZ
            IF (VERBOSITY .GT. 3) WRITE(6,*) 'GZ(',K,') = ',GZ(K)
          END DO
-         IF (FLAVOR.NE.'Ensemble') WRITE (6,*) 'Fourier in Y'
+         WRITE (6,*) 'Fourier in Y'
          DO J=0,NY
            GY(J)=(J*LY)/NY
            DY(J)=LY/NY
