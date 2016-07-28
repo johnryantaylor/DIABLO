@@ -339,6 +339,7 @@ C convert to physical space.
 
       END IF
 
+
 C Compute the nonlinear products in physical space, then transform
 C back to Fourier space to compute the derivative.
 C Here, we compute the horizontal derivatives of the nonlinear terms
@@ -967,6 +968,15 @@ C Now, solve the tridiagonal system for U3(i,:,k)
       END DO
 
 C -- Done getting U1hat, U2hat, U3hat at new RK Step --
+
+C If we are on the final RK step, optionally update the timestep
+C based on the CFL criteria. This won't affect the current timestep
+C since the TEMP1, etc. variables have already been set using
+C the current timestep
+      IF (VARIABLE_DT.and.(RK_STEP.eq.3)
+     &      .and.(MOD(TIME_STEP,UPDATE_DT).EQ.0)) THEN
+        CALL COURANT
+      END IF
 
 ! Transform TH and U to Fourier Space 
       CALL FFT_XZ_TO_FOURIER(U1,CU1,0,NY+1)
