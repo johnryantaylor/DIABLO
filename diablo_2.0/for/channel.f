@@ -2254,8 +2254,8 @@ C Neumann
          END DO
 C Now, Apply BC to mean
          IF (RANKZ.EQ.0) THEN
-           CU1(0,0,1)=CU1(0,0,2)+DY(2)*U_BC_YMIN_C1
-           CU1(0,0,0)=CU1(0,0,1)+DY(1)*U_BC_YMIN_C1
+           CU1(0,0,1)=CU1(0,0,2)-DY(2)*U_BC_YMIN_C1
+           CU1(0,0,0)=CU1(0,0,1)-DY(1)*U_BC_YMIN_C1
          END IF
       ELSE
          STOP 'Error: U_BC_YMIN must be 0, or 1'
@@ -2285,8 +2285,8 @@ C Neumann
          END DO
 C Now, Apply BC to mean
          IF (RANKZ.EQ.0) THEN
-           CU3(0,0,1)=CU3(0,0,2)+DY(2)*W_BC_YMIN_C1
-           CU3(0,0,0)=CU3(0,0,1)+DY(1)*W_BC_YMIN_C1
+           CU3(0,0,1)=CU3(0,0,2)-DY(2)*W_BC_YMIN_C1
+           CU3(0,0,0)=CU3(0,0,1)-DY(1)*W_BC_YMIN_C1
          END IF
       ELSE
          STOP 'Error: W_BC_YMIN must be 0, or 1' 
