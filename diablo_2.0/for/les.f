@@ -88,7 +88,7 @@ C Apply Boundary conditions to velocity field
      &               +4.d0*(0.5d0*(Sij4(I,K,J+1)+Sij4(I,K,J)))**2.d0
      &               +4.d0*Sij5(I,K,J)**2.d0
      &               +2.d0*Sij2(I,K,J)**2.d0
-     &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij4(I,K,J)))**2.d0 
+     &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij6(I,K,J)))**2.d0 
      &               +2.d0*Sij3(I,K,J)**2.d0 )
           END DO
         END DO
