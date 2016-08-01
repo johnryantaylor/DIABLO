@@ -324,6 +324,18 @@
         END DO
       END IF
 
+      ELSE
+! HERE, NPROCY=1, so just apply the boundary conditions to set NU=0 at the
+! top and bottom walls
+        DO K=0,NZP-1
+          DO I=0,NXM
+            NU_T(I,K,1)=0.d0
+            NU_T(I,K,2)=0.d0
+            NU_T(I,K,NY)=0.d0
+            NU_T(I,K,NY+1)=0.d0
+          END DO
+        END DO
+
       END IF
 
       RETURN
