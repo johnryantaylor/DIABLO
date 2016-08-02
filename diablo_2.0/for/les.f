@@ -72,6 +72,7 @@ C Apply Boundary conditions to velocity field
 
       call compute_strain_chan
 
+
 ! Convert the velocity to physical space
       call FFT_XZ_TO_PHYSICAL(CU1,U1,0,NY+1)
       call FFT_XZ_TO_PHYSICAL(CU2,U2,0,NY+1)
@@ -88,7 +89,7 @@ C Apply Boundary conditions to velocity field
      &               +4.d0*(0.5d0*(Sij4(I,K,J+1)+Sij4(I,K,J)))**2.d0
      &               +4.d0*Sij5(I,K,J)**2.d0
      &               +2.d0*Sij2(I,K,J)**2.d0
-     &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij4(I,K,J)))**2.d0 
+     &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij6(I,K,J)))**2.d0 
      &               +2.d0*Sij3(I,K,J)**2.d0 )
           END DO
         END DO
@@ -127,6 +128,7 @@ C Apply Boundary conditions to velocity field
           END DO
         END DO
       END DO
+
 
 ! Now, compute at |S|*S_ij at GY points
       DO J=2,NY+1
@@ -187,6 +189,7 @@ C Apply Boundary conditions to velocity field
 
 ! Convert the stress tensor to Fourier space
 
+
       CALL FFT_XZ_TO_FOURIER(Sij1,CSij1,0,NY+1)
 ! Sij2 is added through an implicit eddy viscosity
 !      CALL FFT_XZ_TO_FOURIER(Sij2,CSij2,0,NY+1)
@@ -229,28 +232,29 @@ C Apply Boundary conditions to velocity field
 ! Now, add the subgrid scale forcing to CFi
 ! (This includes the subgrid scale stress as an explicit R-K term
 
+
       DO J=J1,J2
         DO K=0,TNKZ
           DO I=0,NXP-1
             CF1(I,K,J)=CF1(I,K,J)
      &                -CIKX(I)*CSij1(I,K,J)
-     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
-     &                -CIKZ(K)*CSij5(I,K,J)
-            CF3(I,K,J)=CF3(I,K,J)
-     &                -CIKX(I)*CSij5(I,K,J)
-     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
-     &                -CIKZ(K)*CSij3(I,K,J)   
+!     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
+!     &                -CIKZ(K)*CSij5(I,K,J)
+!            CF3(I,K,J)=CF3(I,K,J)
+!     &                -CIKX(I)*CSij5(I,K,J)
+!     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
+!     &                -CIKZ(K)*CSij3(I,K,J)   
           END DO
         END DO
       END DO
       DO J=2,NY
        DO K=0,TNKZ
          DO I=0,NXP-1
-           CF2(I,K,J)=CF2(I,K,J)
-     &                -CIKX(I)*CSij4(I,K,J)
+!           CF2(I,K,J)=CF2(I,K,J)
+!     &                -CIKX(I)*CSij4(I,K,J)
 ! Sij2 is added through an implict eddy viscosity
 !     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
-     &                -CIKZ(K)*CSij6(I,K,J)
+!     &                -CIKZ(K)*CSij6(I,K,J)
           END DO
         END DO
       END DO
@@ -267,7 +271,7 @@ C Apply Boundary conditions to velocity field
       DO K=0,TNKZ
         DO I=0,NXP-1
           DO J=2,NY
-            CF2(I,K,J)=CF2(I,K,J)+CIKX(I)*CTEMP(I,K,J)
+!            CF2(I,K,J)=CF2(I,K,J)+CIKX(I)*CTEMP(I,K,J)
           END DO
         END DO
       END DO
@@ -282,7 +286,7 @@ C Apply Boundary conditions to velocity field
       DO K=0,TNKZ
         DO I=0,NXP-1
           DO J=2,NY
-            CF2(I,K,J)=CF2(I,K,J)+CIKZ(K)*CTEMP(I,K,J)
+!            CF2(I,K,J)=CF2(I,K,J)+CIKZ(K)*CTEMP(I,K,J)
           END DO
         END DO
       END DO
@@ -369,6 +373,7 @@ C For use in the LES model in channel flow (2 periodic directions)
           END DO
         END DO
       END DO  
+
 
        CALL FFT_XZ_TO_PHYSICAL(CSij1,Sij1,0,NY+1)
        CALL FFT_XZ_TO_PHYSICAL(CSij2,Sij2,0,NY+1)
@@ -624,89 +629,51 @@ C For use in the LES model in channel flow (2 periodic directions)
 ! velocity at the ghost cells so that the LES model doesn't use the large
 ! velocity gradient
       IF (U_BC_YMAX.eq.1) THEN
-        IF (USE_MPI) THEN
-          IF (RANKY.eq.NPROCY-1) THEN
+        IF ((RANKY.eq.NPROCY-1).or.(.NOT.USE_MPI)) THEN
 ! We are on process at the upper wall
-            DO K=0,NZP-1
-              DO I=0,NXM
-                U1(I,K,NY)=U1(I,K,NY-1)    
-                U1(I,K,NY+1)=U1(I,K,NY-1)    
-              END DO
-            END DO
-          END IF
-        ELSE
-! For serial version:
-          DO K=0,NZM
-            DO I=0,NXM
-              U1(I,K,NY)=U1(I,K,NY-1)    
-              U1(I,K,NY+1)=U1(I,K,NY-1)    
-            END DO
-          END DO
-        END IF
-      END IF
-      IF (U_BC_YMIN.eq.1) THEN
-        IF (USE_MPI) THEN 
-          IF (RANKY.eq.0) THEN
-! We are on a process at the bottom wall          
-            DO K=0,NZP-1
-              DO I=0,NXM
-                U1(I,K,1)=U1(I,K,2)
-                U1(I,K,0)=U1(I,K,2)
-              END DO
-            END DO
-          END IF
-        ELSE
-! For serial version:
-          DO K=0,NZM
-            DO I=0,NXM
-              U1(I,K,1)=U1(I,K,2)
-              U1(I,K,0)=U1(I,K,2)
-            END DO
+          DO K=0,TNKZ
+           DO I=0,NXP-1
+             CU1(I,K,NY)=CU1(I,K,NY-1)
+             CU1(I,K,NY+1)=CU1(I,K,NY)
+           END DO
           END DO
         END IF
       END IF
 
       IF (W_BC_YMAX.eq.1) THEN
-        IF (USE_MPI) THEN
-          IF (RANKY.eq.NPROCY-1) THEN
+        IF ((RANKY.eq.NPROCY-1).or.(.NOT.USE_MPI)) THEN
 ! We are on process at the upper wall
-            DO K=0,NZP-1
-              DO I=0,NXM
-                U3(I,K,NY)=U3(I,K,NY-1)    
-                U3(I,K,NY+1)=U3(I,K,NY-1)    
-              END DO
-            END DO
-          END IF
-        ELSE
-! For serial version:
-          DO K=0,NZM
-            DO I=0,NXM
-              U3(I,K,NY)=U3(I,K,NY-1)    
-              U3(I,K,NY+1)=U3(I,K,NY-1)    
-            END DO
+          DO K=0,TNKZ
+           DO I=0,NXP-1
+             CU3(I,K,NY)=CU3(I,K,NY-1)
+             CU3(I,K,NY+1)=CU3(I,K,NY)
+           END DO
           END DO
         END IF
       END IF
-      IF (W_BC_YMIN.eq.1) THEN
-        IF (USE_MPI) THEN 
-          IF (RANKY.eq.0) THEN
+
+      IF (U_BC_YMIN.eq.1) THEN
+        IF ((RANKY.eq.0).or.(.NOT.USE_MPI)) THEN
 ! We are on a process at the bottom wall          
-            DO K=0,NZP-1
-              DO I=0,NXM
-                U3(I,K,1)=U3(I,K,2)
-                U3(I,K,0)=U3(I,K,2)
-              END DO 
-            END DO
-          END IF
-        ELSE
-! For serial version:
-          DO K=0,NZM
-            DO I=0,NXM
-              U3(I,K,1)=U3(I,K,2)
-              U3(I,K,0)=U3(I,K,2)
-            END DO
-          END DO
-        END IF
+         DO K=0,TNKZ
+           DO I=0,NXP-1
+             CU1(I,K,1)=CU1(I,K,2)
+             CU1(I,K,0)=CU1(I,K,1)
+           END DO
+         END DO
+       END IF
+      END IF
+
+      IF (W_BC_YMIN.eq.1) THEN
+        IF ((RANKY.eq.0).or.(.NOT.USE_MPI)) THEN
+! We are on a process at the bottom wall          
+         DO K=0,TNKZ
+           DO I=0,NXP-1
+             CU3(I,K,1)=CU3(I,K,2)
+             CU3(I,K,0)=CU3(I,K,1)
+           END DO
+         END DO
+       END IF
       END IF
 
       RETURN
