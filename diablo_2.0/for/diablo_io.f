@@ -242,47 +242,27 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
          IF (RANK.EQ.0) 
      &        write(*,*) 'NX_T, NY_T, NZ_T: ',NX_T,NY_T,NZ_T
 
-!     TEMPORARY, UNCOMMENT!!!
-!     IF ((NX .NE. NX_T) .OR. (NY .NE. NY_T) .OR. (NZ .NE. NZ_T))
-!     *     STOP 'Error: old flowfield wrong dimensions. '
-!     IF (NUM_PER_DIR .NE. NUM_PER_DIR_T)
-!     *     STOP 'Error: old flowfield wrong NUM_PER_DIR. '
+        IF ((NX .NE. NX_T) .OR. (NY .NE. NY_T) .OR. (NZ .NE. NZ_T))
+     *     STOP 'Error: old flowfield wrong dimensions. '
+        IF (NUM_PER_DIR .NE. NUM_PER_DIR_T)
+     *     STOP 'Error: old flowfield wrong NUM_PER_DIR. '
 
          IF (RANK.EQ.0) 
      &        write(*,*) 'READING FLOW'
          IF (NUM_PER_DIR.EQ.3) THEN
 
-!     TEMPORARY!!!!!
-!     READ (10) (((CU1(I,K,J),I=0,NKX),K=0,TNKZ),J=0,TNKY),
-!     *            (((CU2(I,K,J),I=0,NKX),K=0,TNKZ),J=0,TNKY),
-!     *            (((CU3(I,K,J),I=0,NKX),K=0,TNKZ),J=0,TNKY)
-!     DO N=1,NUM_READ_TH
+         READ (10) (((CU1(I,K,J),I=0,NKX),K=0,TNKZ),J=0,TNKY),
+     *            (((CU2(I,K,J),I=0,NKX),K=0,TNKZ),J=0,TNKY),
+     *            (((CU3(I,K,J),I=0,NKX),K=0,TNKZ),J=0,TNKY)
+         DO N=1,NUM_READ_TH
 !     Specify in input.dat which scalars are to be read
-!     OPEN(UNIT=11,FILE=FNAME_TH(READ_TH_INDEX(N)),STATUS="OLD"
-!     &           ,FORM="UNFORMATTED")
-!     READ (11) NX_T, NY_T, NZ_T, NUM_PER_DIR_T, TIME, TIME_STEP
-!     READ (11) (((CTH(I,K,J,READ_TH_INDEX(N))
-!     &           ,I=0,NKX),K=0,TNKZ),J=0,TNKY)
-!     CLOSE(11)
-!     END DO
-
-!     TEMPORARY, REMOVE THESE LINES !!!!
-            READ (10) 
-     *           (((CU1(I,K,J),I=0,256/3),K=0,2*256/3),J=0,2*256/3),
-     *           (((CU2(I,K,J),I=0,256/3),K=0,2*256/3),J=0,2*256/3),
-     *           (((CU3(I,K,J),I=0,256/3),K=0,2*256/3),J=0,2*256/3)
-            DO N=1,NUM_READ_TH
-!     Specify in input.dat which scalars are to be read
-               OPEN(UNIT=11,FILE=FNAME_TH(READ_TH_INDEX(N)),STATUS="OLD"
-     &              ,FORM="UNFORMATTED")
-               READ (11) NX_T, NY_T, NZ_T, NUM_PER_DIR_T, 
-     *              TIME, TIME_STEP
-               READ (11) (((CTH(I,K,J,READ_TH_INDEX(N))
-     &              ,I=0,256/3),K=0,2*256/3),J=0,2*256/3)
-               CLOSE(11)
-            END DO
-
-
+         OPEN(UNIT=11,FILE=FNAME_TH(READ_TH_INDEX(N)),STATUS="OLD"
+     &           ,FORM="UNFORMATTED")
+         READ (11) NX_T, NY_T, NZ_T, NUM_PER_DIR_T, TIME, TIME_STEP
+         READ (11) (((CTH(I,K,J,READ_TH_INDEX(N))
+     &           ,I=0,NKX),K=0,TNKZ),J=0,TNKY)
+         CLOSE(11)
+         END DO
 
          ELSEIF (NUM_PER_DIR.EQ.2) THEN
             READ (10) (((CU1(I,K,J),I=0,NKX),K=0,TNKZ),J=1,NY),
@@ -440,14 +420,14 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       call WALL_TIME(END_TIME)
       if (END_TIME-START_TIME.gt.TIME_LIMIT) THEN
          IF (RANK.EQ.0) 
-     &        write(*,*) ' STOP beacuse of wall-time hit!'
+     &        write(*,*) ' STOP because of wall-time hit!'
          FLAG=.TRUE.
       END IF
       
       INQUIRE(FILE="stop.now", EXIST=FILE_EXISTS)
       IF ( FILE_EXISTS ) THEN
          IF (RANK.EQ.0) 
-     &        write(*,*) ' STOP beacuse of stop.now file!'
+     &        write(*,*) ' STOP because of stop.now file!'
          FLAG=.TRUE.
       END IF
       
@@ -458,10 +438,8 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
 
       subroutine wall_time(wt)
 c
-c     Return wall-clock time as seconds after Jan. 1, 2014.
+c     Return wall-clock time as seconds after Jan. 1, 2016.
 c     Support for leap year is not included anymore.
-c
-c     Next leap year is 2016!
 c
 c     By using a 'save' statement, the wall-time after the first
 c     call to the subroutine could be computed, but that is not
@@ -514,8 +492,8 @@ c
 c
 c     And compute wall-clock time
 c
-      wt = (val(1)-2014)*365*86400+
-     &     day*86400+val(5)*3600+val(6)*60+val(7)+val(8)/1000.
+      wt = (val(1)-2016)*365*86400+
+     &     day*86400+val(5)*3600+val(6)*60+val(7)+dble(val(8)/1000.d0)
 
       end 
 
