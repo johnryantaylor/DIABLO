@@ -422,6 +422,10 @@ c     Dimensions in the memory and in the file
             dname="TH"//CHAR(ith+45)
          end select
 
+         if ((ith.lt.3).or.(.NOT.CREATE_NEW_TH(max(0,ith-3)))) then
+
+! Check to make sure that we should read in this scalar
+
          call h5dopen_f(gid,trim(dname),dset_id,error)   
          call h5dget_space_f(dset_id,filspace_id,error)
 
@@ -455,7 +459,11 @@ c     Dimensions in the memory and in the file
 !     Close dateset
          call h5sclose_f(filspace_id, error)
          call h5dclose_f(dset_id, error)
+
+      end if
+
       end do
+
 
 !     Decide whether to compute the pressure or to read
       call h5lexists_f(gid, 'P', READ_PRESSURE, error)
@@ -505,9 +513,11 @@ c     Dimensions in the memory and in the file
       call fft_xz_to_fourier(U2,CU2,0,NY+1)
       call fft_xz_to_fourier(U3,CU3,0,NY+1)
       do ith=1,N_TH
+        if (.NOT.CREATE_NEW_TH(ith)) then
          S1(:,:,:)=TH(:,:,:,ith)
          call fft_xz_to_fourier(S1,CS1,0,NY+1)
-         CS1(:,:,:)=CTH(:,:,:,ith)
+         CTH(:,:,:,ith)=CS1(:,:,:)
+        end if
       end do
 
       IF (USE_MPI) THEN
