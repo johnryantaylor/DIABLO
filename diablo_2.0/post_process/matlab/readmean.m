@@ -6,18 +6,18 @@ if (~exist(base_dir))
 end
 % Set the grid and domain size in the y-direction
 %NP=input('Enter the number of processes in the y-direction: ');
-NP=4;
+NP=2;
 %NY_S=input('Insert the number of points per process in the y-direction: ');
-NY_S=17;
+NY_S=33;
 % Enter the number of scalars
-N_TH=1;
+N_TH=5;
 % Enter the viscosity from input.dat
 NU=0.001;
 % Enter the Prandtl number
 Pr=1;
 kappa=NU/Pr;
 % Enter the richardson number for each scalar
-RI(1:N_TH)=0.15;
+RI(1:N_TH)=1.0;
 % Set the start and end time in code units for start of averaging
 tstart=0; 
 %tend=999; % If tend isn't defined, tend will default to the final time
@@ -86,7 +86,7 @@ end
 % Now read in scalars
 if (N_TH>0)
 % Determine the number of records in the file based on its length
-  nk_th=floor(length(turbo_th(:,1))/(N_TH*(NY_S+2)));
+  nk_th=floor(length(turbo_th(:,1))/(N_TH*(NY_S)+2));
 else
   nk_th=0;
 end
@@ -236,10 +236,10 @@ for n=1:N_TH
 end
 thv_int=trapz(gyf,thv,1);
 thrms_int=trapz(gyf,thrms,1);
- 
-for j=2:NY
-  gy(j)=(gyf(j)+gyf(j-1))/2;    
-end
+
+% Get GY from hdf5 grid file
+gy=h5read([base_dir '/grid.h5'],'/grids/y');
+
 for j=2:NY-1
   dyf(j)=(gy(j+1)-gy(j));
 end
@@ -255,4 +255,12 @@ for j=2:NY-1
   end
 end
 
+for n=1:N_TH
+for k=1:nk
+  thme_int(k,n)=0;
+  for j=2:NY-1
+    thme_int(k,n)=thme_int(k,n)+thme(j,k,n)*(gy(j+1)-gy(j));
+  end
+end
+end
 
