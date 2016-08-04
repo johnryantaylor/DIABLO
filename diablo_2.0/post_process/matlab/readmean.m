@@ -6,9 +6,9 @@ if (~exist(base_dir))
 end
 % Set the grid and domain size in the y-direction
 %NP=input('Enter the number of processes in the y-direction: ');
-NP=4;
+NP=2;
 %NY_S=input('Insert the number of points per process in the y-direction: ');
-NY_S=17;
+NY_S=26;
 % Enter the number of scalars
 N_TH=1;
 % Enter the viscosity from input.dat
@@ -86,7 +86,7 @@ end
 % Now read in scalars
 if (N_TH>0)
 % Determine the number of records in the file based on its length
-  nk_th=floor(length(turbo_th(:,1))/(N_TH*(NY_S+2)));
+  nk_th=floor(length(turbo_th(:,1))/(N_TH*(NY_S)+2));
 else
   nk_th=0;
 end
