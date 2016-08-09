@@ -422,7 +422,8 @@ c     Dimensions in the memory and in the file
             dname="TH"//CHAR(ith+45)
          end select
 
-         if ((ith.lt.3).or.(.NOT.CREATE_NEW_TH(max(0,ith-3)))) then
+         if ((ith.le.3).or.
+     &      ((ith.gt.3).and.(.NOT.CREATE_NEW_TH(max(1,ith-3))))) then
 
 ! Check to make sure that we should read in this scalar
 
