@@ -23,7 +23,7 @@
 ! Convert to Fourier space
 !       CALL FFT_XZ_TO_FOURIER(S1,CS1,0,NY+1)
 !       DO J=JSTART,JEND
-!         DO K=0,TNKY 
+!         DO K=0,TNKZ
 !           DO I=0,NXP-1
 !             CF1(I,K,J)=CF1(I,K,J)+CS1(I,K,J)
 !           END DO
@@ -42,7 +42,7 @@
 ! Convert to Fourier space
 !       CALL FFT_XZ_TO_FOURIER(S1,CS1,0,NY+1)
 !       DO J=2,NY
-!         DO K=0,TNKY
+!         DO K=0,TNKZ
 !           DO I=0,NXP-1
 !             CF2(I,K,J)=CF2(I,K,J)+CS1(I,K,J)
 !           END DO
@@ -62,7 +62,7 @@
 ! Convert to Fourier space
 !       CALL FFT_XZ_TO_FOURIER(S1,CS1,0,NY+1)
 !       DO J=JSTART,JEND
-!         DO K=0,TNKY
+!         DO K=0,TNKZ
 !           DO I=0,NXP-1
 !             CFTH(I,K,J,N)=CFTH(I,K,J,N)+CS1(I,K,J)
 !           END DO
@@ -90,7 +90,7 @@
 ! For example, to add a linear damping term (e.g. -alpha*U) to the RHS:
 !       alpha=-0.1d0
 !       DO J=JSTART,JEND
-!         DO K=0,TNKY 
+!         DO K=0,TNKZ
 !           DO I=0,NXP-1
 !             CF1(I,K,J)=CF1(I,K,J)-alpha*CU1(I,K,J)
 !           END DO
@@ -100,7 +100,7 @@
 ! For U2 do this...
 ! Note that the only thing that changes are the bounds of the J index
 !       DO J=2,NY
-!         DO K=0,TNKY
+!         DO K=0,TNKZ
 !           DO I=0,NXP-1
 !             CF2(I,K,J)=CF2(I,K,J)-alpha*CU2(I,K,J)
 !           END DO
@@ -109,7 +109,7 @@
 
 ! For scalars, do this...
 !       DO J=JSTART,JEND
-!         DO K=0,TNKY
+!         DO K=0,TNKZ
 !           DO I=0,NXP-1
 !             CFTH(I,K,J,N)=CFTH(I,K,J,N)-alpha*CTH(I,K,J,N)
 !           END DO
