@@ -16,6 +16,9 @@ C if for the subgrid scalar dissipation
 
       real*8 S1_mean(0:NY+1)
       real*8 NU_T_mean(0:NY+1)
+      real*8 EPS_SGS1_MEAN(0:NY+1)
+      real*8 U3_bar(0:NY+1)
+      real*8 U1_bar(0:NY+1)
  
       real*8 C_SMAG
       parameter (C_SMAG=0.13d0)
@@ -72,6 +75,25 @@ C Apply Boundary conditions to velocity field
 
       call compute_strain_chan
 
+! to remove mean shear: first get the mean horizontal velocity
+! as in save_stats
+! Save the mean velocity
+! maybe JSTART to JEND
+      IF (RANKZ.eq.0) THEN
+      DO J=0,NY+1
+        U1_bar(J)=DBLE(CU1(0,0,J))
+        U3_bar(J)=DBLE(CU3(0,0,J))
+      END DO
+      END IF 
+            CALL MPI_BCAST(U1_bar,NY+2,MPI_DOUBLE_PRECISION,0,
+     &     MPI_COMM_Z,ierror)
+            CALL MPI_BCAST(U3_bar,NY+2,MPI_DOUBLE_PRECISION,0,
+     &     MPI_COMM_Z,ierror)
+
+!        IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
+!           WRITE(*,*) RANK,GYF(78),U1_bar(78),U3_bar(78) 
+!        END IF
+
 
 ! Convert the velocity to physical space
       call FFT_XZ_TO_PHYSICAL(CU1,U1,0,NY+1)
@@ -81,15 +103,27 @@ C Apply Boundary conditions to velocity field
 ! Compute |S| at GYF points, store in S1
 ! Interpolation to GYF points is easy since by definition
 ! GYF points are exactly midway between neighboring GY points
+! Sij4 and Sij6 have the mean shear 
+! remove the zero value U1,3bar as in 
+! compute strain 
       DO J=JSTART,JEND
         DO K=0,NZP-1
           DO I=0,NXM
             S1(I,K,J)=SQRT(
      &                2.d0*Sij1(I,K,J)**2.d0
-     &               +4.d0*(0.5d0*(Sij4(I,K,J+1)+Sij4(I,K,J)))**2.d0
+     &               +4.d0*(0.5d0*(Sij4(I,K,J+1)+Sij4(I,K,J)
+! Optionally remove mean shear
+     &                           -0.5d0*(U1_bar(J)-U1_bar(J-1))/DY(J)
+     &                           -0.5d0*(U1_bar(J+1)-U1_bar(J))/DY(J+1)
+     &     ))**2.d0
+! end edit
      &               +4.d0*Sij5(I,K,J)**2.d0
      &               +2.d0*Sij2(I,K,J)**2.d0
-     &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij6(I,K,J)))**2.d0 
+     &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij6(I,K,J)
+! Optionally remove mean shear
+     &                           -0.5d0*(U3_bar(J)-U3_bar(J-1))/DY(J)
+     &                           -0.5d0*(U3_bar(J+1)-U3_bar(J))/DY(J+1)
+     &        ))**2.d0 
      &               +2.d0*Sij3(I,K,J)**2.d0 )
           END DO
         END DO
@@ -100,16 +134,22 @@ C Apply Boundary conditions to velocity field
         DO K=0,NZP-1
           DO I=0,NXM
             TEMP(I,K,J)=SQRT(
-     &                2.d0*((Sij1(I,K,J)*DYF(j-1)+Sij1(I,K,J-1)*DYF(j))
-     &                               /(2.d0*DY(j)))**2.d0
-     &               +4.d0*Sij4(I,K,J)**2.d0
-     &               +4.d0*((Sij5(I,K,J)*DYF(j-1)+Sij5(I,K,J-1)*DYF(j))
-     &                               /(2.d0*DY(j)))**2.d0
-     &               +2.d0*((Sij2(I,K,J)*DYF(j-1)+Sij2(I,K,J-1)*DYF(j))
-     &                               /(2.d0*DY(j)))**2.d0
-     &               +4.d0*Sij6(I,K,J)**2.d0
-     &               +2.d0*((Sij3(I,K,J)*DYF(j-1)+Sij3(I,K,J-1)*DYF(j))
-     &                               /(2.d0*DY(j)))**2.d0
+     &                2.d0*((Sij1(I,K,J)*DYF(J-1)+Sij1(I,K,J-1)*DYF(J))
+     &                               /(2.d0*DY(J)))**2.d0
+     &               +4.d0*(Sij4(I,K,J)
+! optionally remove mean shear
+     &                      -0.5d0*(U1_bar(J)-U1_bar(J-1))/DY(J)
+     &                                 )**2.d0
+     &               +4.d0*((Sij5(I,K,J)*DYF(J-1)+Sij5(I,K,J-1)*DYF(J))
+     &                               /(2.d0*DY(J)))**2.d0
+     &               +2.d0*((Sij2(I,K,J)*DYF(J-1)+Sij2(I,K,J-1)*DYF(J))
+     &                               /(2.d0*DY(J)))**2.d0
+     &               +4.d0*(Sij6(I,K,J)
+! remove mean shear
+     &                      -0.5d0*(U3_bar(J)-U3_bar(J-1))/DY(J)
+     &                                 )**2.d0
+     &               +2.d0*((Sij3(I,K,J)*DYF(J-1)+Sij3(I,K,J-1)*DYF(J))
+     &                               /(2.d0*DY(J)))**2.d0
      &                )
           END DO
         END DO
@@ -291,30 +331,142 @@ C Apply Boundary conditions to velocity field
         END DO
       END DO
 
-
 ! Periodically, output mean quantities
       IF ((MOD(TIME_STEP,SAVE_STATS_INT).EQ.0).AND.(RK_STEP.EQ.1)) THEN
 ! Get plane averages
-        do j=0,NY+1
-          S1_mean(j)=0.d0
-          NU_T_mean(j)=0.d0
-          do i=0,NXM
-          do k=0,NZP-1
-            S1_mean(j)=S1_mean(j)+S1(I,K,J)
-            NU_T_mean(j)=NU_T_mean(j)+NU_T(I,K,J)
+        do J=0,NY+1
+          S1_mean(J)=0.d0
+          NU_T_mean(J)=0.d0
+          do I=0,NXM
+          do K=0,NZP-1
+            S1_mean(J)=S1_mean(J)+S1(I,K,J)
+            NU_T_mean(J)=NU_T_mean(J)+NU_T(I,K,J)
           end do
           end do
         end do
-
+! compute part of sgs term
+! U1*F1+U2*F2+U3*F3
+! compute part of CF1
+      DO J=J1,J2
+        DO K=0,TNKZ
+          DO I=0,NXP-1
+            CTEMP(I,K,J)=
+     &                -CIKX(I)*CSij1(I,K,J)
+     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(J)
+     &                -CIKZ(K)*CSij5(I,K,J)
+          END DO
+        END DO
+      END DO
+        CALL FFT_XZ_TO_PHYSICAL(CTEMP,TEMP,0,NY+1)
+        do J=0,NY+1
+          EPS_SGS1_MEAN(J)=0.d0
+          do I=0,NXM
+          do K=0,NZP-1
+            EPS_SGS1_MEAN(J)=EPS_SGS1_MEAN(J)+TEMP(I,K,J)*U1(I,K,J)
+          end do
+          end do
+        end do
+! compute part of CF3
+      DO J=J1,J2
+        DO K=0,TNKZ
+          DO I=0,NXP-1
+            CTEMP(I,K,J)=
+     &                -CIKX(I)*CSij5(I,K,J)
+     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
+     &                -CIKZ(K)*CSij3(I,K,J)
+          END DO
+        END DO
+      END DO 
+        CALL FFT_XZ_TO_PHYSICAL(CTEMP,TEMP,0,NY+1)
+        do J=0,NY+1
+          do I=0,NXM
+          do K=0,NZP-1
+            EPS_SGS1_MEAN(J)=EPS_SGS1_MEAN(J)+TEMP(I,K,J)*U3(I,K,J)
+          end do
+          end do
+        end do
+! compute part of CF2
+      DO J=2,NY
+       DO K=0,TNKZ
+         DO I=0,NXP-1
+           CTEMP(I,K,J)=
+     &                -CIKX(I)*CSij4(I,K,J)
+! Sij2 is added through an implict eddy viscosity
+!     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
+     &                -CIKZ(K)*CSij6(I,K,J)
+          END DO
+        END DO
+      END DO
+        CALL FFT_XZ_TO_PHYSICAL(CTEMP,TEMP,0,NY+1)
+        do J=0,NY+1
+          do I=0,NXM
+          do K=0,NZP-1
+            EPS_SGS1_MEAN(J)=EPS_SGS1_MEAN(J)+TEMP(I,K,J)*U2(I,K,J)
+          end do
+          end do
+        end do
+! Add back the Cross-terms using an explicit treatment
+! compute second part of CF2
+      DO K=0,NZP-1
+        DO I=0,NXM
+          DO J=2,NY
+            TEMP(I,K,J)=NU_T(I,K,J)*(U1(I,K,J)-U1(I,K,J-1))/DY(J)
+          END DO
+        END DO
+      END DO
+      CALL FFT_XZ_TO_FOURIER(TEMP,CTEMP,2,NY)
+      DO K=0,TNKZ
+        DO I=0,NXP-1
+          DO J=2,NY
+            CTEMP(I,K,J)=CIKX(I)*CTEMP(I,K,J)
+          END DO
+        END DO
+      END DO
+        CALL FFT_XZ_TO_PHYSICAL(CTEMP,TEMP,0,NY+1)
+        do J=0,NY+1
+          do I=0,NXM
+          do K=0,NZP-1
+            EPS_SGS1_MEAN(J)=EPS_SGS1_MEAN(J)+TEMP(I,K,J)*U2(I,K,J)
+          end do
+          end do
+        end do
+      DO K=0,NZP-1
+        DO I=0,NXM
+          DO J=2,NY
+            TEMP(I,K,J)=NU_T(I,K,J)*(U3(I,K,J)-U3(I,K,J-1))/DY(J)
+          END DO
+        END DO
+      END DO
+      CALL FFT_XZ_TO_FOURIER(TEMP,CTEMP,2,NY)
+      DO K=0,TNKZ
+        DO I=0,NXP-1
+          DO J=2,NY
+            CTEMP(I,K,J)=CIKZ(K)*CTEMP(I,K,J)
+          END DO
+        END DO
+      END DO
+        CALL FFT_XZ_TO_PHYSICAL(CTEMP,TEMP,0,NY+1)
+        do J=0,NY+1
+          do I=0,NXM
+          do K=0,NZP-1
+            EPS_SGS1_MEAN(J)=EPS_SGS1_MEAN(J)+TEMP(I,K,J)*U2(I,K,J)
+          end do
+          end do
+        end do
+ 
       call mpi_allreduce(mpi_in_place,S1_mean,NY+2,MPI_DOUBLE_PRECISION,
      &     MPI_SUM,MPI_COMM_Z,ierror)
       call mpi_allreduce(mpi_in_place,NU_T_mean,NY+2
+     &    ,MPI_DOUBLE_PRECISION,
+     &     MPI_SUM,MPI_COMM_Z,ierror)
+      call mpi_allreduce(mpi_in_place,EPS_SGS1_MEAN,NY+2
      &    ,MPI_DOUBLE_PRECISION,
      &     MPI_SUM,MPI_COMM_Z,ierror)
 
         do j=0,NY+1
           S1_mean(j)=S1_mean(j)/dble(NX*NZ)
           NU_T_mean(j)=NU_T_mean(j)/dble(NX*NZ)
+          EPS_SGS1_MEAN(j)=EPS_SGS1_MEAN(j)/dble(NX*NZ)
         end do
 
       IF (RANKZ.EQ.0) THEN
@@ -328,10 +480,10 @@ C Apply Boundary conditions to velocity field
         write(42,*) TIME_STEP,TIME,DELTA_T
         do j=1,NY
           write(42,420) j,GYF(J),
-     &      NU_T_mean(J)
+     &      NU_T_mean(J),EPS_SGS1_MEAN(J)
         end do
       END IF
-420     format(I3,' ',2(F20.9,' '))
+420     format(I3,' ',2(F30.20,' '))
 
       END IF
 
@@ -679,8 +831,70 @@ C For use in the LES model in channel flow (2 periodic directions)
       RETURN
       END
 
+      subroutine tkebudget_chan_les
+! Calculate the componet of th SGS dissipation rate 
+! only includes the terms timestepped implicitly
+      include 'header'
+      include 'header_les'
+
+      character*35 FNAME
+      real*8 epsilon_sgs(NY)
+      integer i,j,k
+
+! Compute the turbulent dissipation rate, epsilon=nu*<du_i/dx_j
+! du_i/dx_j>
+
+      DO J=1,NY
+        DO K=0,NZP-1
+          DO I=0,NXM
+            TEMP(I,K,J)=U1(I,K,J)*
+     &        (  (NU_T(I,K,J+1) * (U1(I,K,J+1) - U1(I,K,J)) / DY(J+1)
+     &         -  NU_T(I,K,J) * (U1(I,K,J)   - U1(I,K,J-1)) / DY(J))
+     &               /DYF(J)  )
+     &           +U3(I,K,J)*
+     &        (  (NU_T(I,K,J+1) * (U3(I,K,J+1) - U3(I,K,J)) / DY(J+1)
+     &        - NU_T(I,K,J) * (U3(I,K,J)   - U3(I,K,J-1)) / DY(J))
+     &              /DYF(J)  )
+     &           +U2(I,K,J)*
+     &     ((0.5d0*(NU_T(I,K,J)+NU_T(I,K,J+1))*(U2(I,K,J+1)-U2(I,K,J))
+     &                                              / DYF(J)
+     &    -0.5d0*(NU_T(I,K,J)+NU_T(I,K,J-1))*(U2(I,K,J)-U2(I,K,J-1))
+     &                                          / DYF(J-1))   /DY(J)  )
+          END DO
+        END DO
+      END DO
+ 
+! Now calculate the horizontal average
+        do j=1,NY
+          epsilon_sgs(j)=0.d0
+          do i=0,NXM
+          do k=0,NZP-1
+            epsilon_sgs(j)=epsilon_sgs(j)+TEMP(I,K,J)
+          end do
+          end do
+        end do
+
+      call mpi_allreduce(mpi_in_place,epsilon_sgs,NY+2
+     &    ,MPI_DOUBLE_PRECISION,
+     &     MPI_SUM,MPI_COMM_Z,ierror)        
+
+      IF (RANKZ.EQ.0) THEN
+      IF (USE_MPI) THEN
+        FNAME='tke_les'//trim(MPI_IO_NUM)//'.txt'
+      ELSE
+        FNAME='tke_les.txt'
+      END IF
+      open(46,file=FNAME,form='formatted',status='unknown')
+
+      write(46,*) TIME_STEP,TIME,DELTA_T
+        do j=1,NY
+          write(46,460) j,GYF(J),epsilon_sgs(J)
+        end do
+      END IF
+460     format(I3,' ',2(F30.20,' '))
 
 
+      END
 
 
 
