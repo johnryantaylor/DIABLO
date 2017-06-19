@@ -14,7 +14,7 @@ RI(1:N_TH)=0.15; % Enter the richardson number for each scalar
 tstart=0;
 
 % Set the filename
-filename=[base_dir '/mean.h'];
+filename=[base_dir '/mean.h5'];
 
 % Read in the number of samples (store in nk)
 file_info=h5info(filename);
