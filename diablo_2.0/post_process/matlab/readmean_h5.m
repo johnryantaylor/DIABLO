@@ -3,7 +3,7 @@
 
 % User settings....
 % Set the run directory
-filename='/local/data/public/jrt51/testing/mean.h5';
+base_dir='/local/data/public/jrt51/testing';
 NY=65; % Here, NY should match the value in grid_def.all
 N_TH=1; % The number of scalars
 Re = 1000; NU=1/Re; % Enter the Reynolds number or viscosity from input.dat
@@ -12,6 +12,9 @@ RI(1:N_TH)=0.15; % Enter the richardson number for each scalar
 
 % Set the start and end time in code units for start of averaging
 tstart=0;
+
+% Set the filename
+filename=[base_dir '/mean.h'];
 
 % Read in the number of samples (store in nk)
 file_info=h5info(filename);
