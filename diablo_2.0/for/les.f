@@ -26,6 +26,10 @@ C if for the subgrid scalar dissipation
       real*8 alpha_sgs,beta_sgs
       real*8 denominator_sum
 
+! Array for writing HDF5 files
+      real*8 Diag(1:NY)
+      character*20 gname
+
       character*35 FNAME
 
 ! Array to store the velocity index for each component of the strain rate tensor
@@ -469,6 +473,31 @@ C Apply Boundary conditions to velocity field
           EPS_SGS1_MEAN(j)=EPS_SGS1_MEAN(j)/dble(NX*NZ)
         end do
 
+
+#ifdef HDF5
+      FNAME='mean_les.h5'
+
+      gname='time'
+      call WriteHDF5_real(FNAME,gname,TIME)
+
+      IF (RANKZ.EQ.0) THEN
+
+      gname='gyf'
+      Diag=gyf(1:NY)
+      call WriteStatH5(FNAME,gname,Diag)
+
+      gname='nu_sgs' 
+      Diag=NU_T_mean(1:NY)
+      call WriteStatH5(FNAME,gname,Diag)     
+
+      gname='eps_sgs1' 
+      Diag=EPS_SGS1_MEAN(1:NY)
+      call WriteStatH5(FNAME,gname,Diag)     
+    
+      END IF
+ 
+#else
+! Here we aren't using HDF5, so write to text file
       IF (RANKZ.EQ.0) THEN
       IF (USE_MPI) THEN
         FNAME='mean_les'//trim(MPI_IO_NUM)//'.txt'
@@ -476,14 +505,14 @@ C Apply Boundary conditions to velocity field
         FNAME='mean_les.txt'
       END IF
       open(42,file=FNAME,form='formatted',status='unknown')
-
         write(42,*) TIME_STEP,TIME,DELTA_T
         do j=1,NY
           write(42,420) j,GYF(J),
      &      NU_T_mean(J),EPS_SGS1_MEAN(J)
         end do
-      END IF
 420     format(I3,' ',2(F30.20,' '))
+      END IF
+#endif
 
       END IF
 
@@ -831,70 +860,6 @@ C For use in the LES model in channel flow (2 periodic directions)
       RETURN
       END
 
-      subroutine tkebudget_chan_les
-! Calculate the componet of th SGS dissipation rate 
-! only includes the terms timestepped implicitly
-      include 'header'
-      include 'header_les'
-
-      character*35 FNAME
-      real*8 epsilon_sgs(NY)
-      integer i,j,k
-
-! Compute the turbulent dissipation rate, epsilon=nu*<du_i/dx_j
-! du_i/dx_j>
-
-      DO J=1,NY
-        DO K=0,NZP-1
-          DO I=0,NXM
-            TEMP(I,K,J)=U1(I,K,J)*
-     &        (  (NU_T(I,K,J+1) * (U1(I,K,J+1) - U1(I,K,J)) / DY(J+1)
-     &         -  NU_T(I,K,J) * (U1(I,K,J)   - U1(I,K,J-1)) / DY(J))
-     &               /DYF(J)  )
-     &           +U3(I,K,J)*
-     &        (  (NU_T(I,K,J+1) * (U3(I,K,J+1) - U3(I,K,J)) / DY(J+1)
-     &        - NU_T(I,K,J) * (U3(I,K,J)   - U3(I,K,J-1)) / DY(J))
-     &              /DYF(J)  )
-     &           +U2(I,K,J)*
-     &     ((0.5d0*(NU_T(I,K,J)+NU_T(I,K,J+1))*(U2(I,K,J+1)-U2(I,K,J))
-     &                                              / DYF(J)
-     &    -0.5d0*(NU_T(I,K,J)+NU_T(I,K,J-1))*(U2(I,K,J)-U2(I,K,J-1))
-     &                                          / DYF(J-1))   /DY(J)  )
-          END DO
-        END DO
-      END DO
- 
-! Now calculate the horizontal average
-        do j=1,NY
-          epsilon_sgs(j)=0.d0
-          do i=0,NXM
-          do k=0,NZP-1
-            epsilon_sgs(j)=epsilon_sgs(j)+TEMP(I,K,J)
-          end do
-          end do
-        end do
-
-      call mpi_allreduce(mpi_in_place,epsilon_sgs,NY+2
-     &    ,MPI_DOUBLE_PRECISION,
-     &     MPI_SUM,MPI_COMM_Z,ierror)        
-
-      IF (RANKZ.EQ.0) THEN
-      IF (USE_MPI) THEN
-        FNAME='tke_les'//trim(MPI_IO_NUM)//'.txt'
-      ELSE
-        FNAME='tke_les.txt'
-      END IF
-      open(46,file=FNAME,form='formatted',status='unknown')
-
-      write(46,*) TIME_STEP,TIME,DELTA_T
-        do j=1,NY
-          write(46,460) j,GYF(J),epsilon_sgs(J)
-        end do
-      END IF
-460     format(I3,' ',2(F30.20,' '))
-
-
-      END
 
 
 
