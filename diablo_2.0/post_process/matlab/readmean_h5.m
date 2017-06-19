@@ -97,6 +97,7 @@ for k=1:nk
 end
 
 % Compute secondary quantities
+tii=time; % tii is a shorthand for time
 % You might want to calculate other quantities, these are a few examples
 for k=1:nk
   for j=1:NY
