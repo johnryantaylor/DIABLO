@@ -94,11 +94,6 @@ C Apply Boundary conditions to velocity field
             CALL MPI_BCAST(U3_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
 
-!        IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
-!           WRITE(*,*) RANK,GYF(78),U1_bar(78),U3_bar(78) 
-!        END IF
-
-
 ! Convert the velocity to physical space
       call FFT_XZ_TO_PHYSICAL(CU1,U1,0,NY+1)
       call FFT_XZ_TO_PHYSICAL(CU2,U2,0,NY+1)
@@ -282,23 +277,23 @@ C Apply Boundary conditions to velocity field
           DO I=0,NXP-1
             CF1(I,K,J)=CF1(I,K,J)
      &                -CIKX(I)*CSij1(I,K,J)
-     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
-     &                -CIKZ(K)*CSij5(I,K,J)
-            CF3(I,K,J)=CF3(I,K,J)
-     &                -CIKX(I)*CSij5(I,K,J)
-     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
-     &                -CIKZ(K)*CSij3(I,K,J)   
+!     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
+!     &                -CIKZ(K)*CSij5(I,K,J)
+!            CF3(I,K,J)=CF3(I,K,J)
+!     &                -CIKX(I)*CSij5(I,K,J)
+!     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
+!     &                -CIKZ(K)*CSij3(I,K,J)   
           END DO
         END DO
       END DO
       DO J=2,NY
        DO K=0,TNKZ
          DO I=0,NXP-1
-           CF2(I,K,J)=CF2(I,K,J)
-     &                -CIKX(I)*CSij4(I,K,J)
+!           CF2(I,K,J)=CF2(I,K,J)
+!     &                -CIKX(I)*CSij4(I,K,J)
 ! Sij2 is added through an implict eddy viscosity
 !     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
-     &                -CIKZ(K)*CSij6(I,K,J)
+!     &                -CIKZ(K)*CSij6(I,K,J)
           END DO
         END DO
       END DO
@@ -315,7 +310,7 @@ C Apply Boundary conditions to velocity field
       DO K=0,TNKZ
         DO I=0,NXP-1
           DO J=2,NY
-            CF2(I,K,J)=CF2(I,K,J)+CIKX(I)*CTEMP(I,K,J)
+!            CF2(I,K,J)=CF2(I,K,J)+CIKX(I)*CTEMP(I,K,J)
           END DO
         END DO
       END DO
@@ -330,7 +325,7 @@ C Apply Boundary conditions to velocity field
       DO K=0,TNKZ
         DO I=0,NXP-1
           DO J=2,NY
-            CF2(I,K,J)=CF2(I,K,J)+CIKZ(K)*CTEMP(I,K,J)
+!            CF2(I,K,J)=CF2(I,K,J)+CIKZ(K)*CTEMP(I,K,J)
           END DO
         END DO
       END DO
