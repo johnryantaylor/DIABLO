@@ -1,5 +1,5 @@
 #!/bin/bash
-rundir=/data/proteus/jrt51/KH_test
+rundir=/local/data/public/jrt51/T2016_slip
 codedir=./for
 
 echo $rundir
@@ -15,14 +15,15 @@ module load hdf5/parallel
 module load mpich/3.0.4
 
 # compile the code
+make clean
 make
 
 # copy the executable back to the run dir
 cp diablo $rundir/diablo
 
 # to run the code, you could do one of the following
-# cd $rundir
+cd $rundir
 # for parallel run:
-# mpirun -np 4 diablo >output.dat &
+mpirun -np 4 diablo >output.dat &
 # for serial run:
 # diablo >output.dat &

@@ -1,18 +1,19 @@
 % Reads in statistics outputted by diablo 
 % User settings....
 % Set the run directory if it hasn't already been defined
-if (~exist(base_dir))
-  base_dir='../../KH_test';
+if (~exist('base_dir'))
+  base_dir='/data/oceanus/jrt51/Crowe/bz0p001';
 end
+run_dir='/data/oceanus/jrt51/Crowe';
 % Set the grid and domain size in the y-direction
 %NP=input('Enter the number of processes in the y-direction: ');
-NP=2;
+NP=1;
 %NY_S=input('Insert the number of points per process in the y-direction: ');
-NY_S=26;
+NY_S=51;
 % Enter the number of scalars
 N_TH=1;
 % Enter the viscosity from input.dat
-NU=0.001;
+NU=1e-6;
 % Enter the Prandtl number
 Pr=1;
 kappa=NU/Pr;
@@ -232,7 +233,7 @@ tke_int=trapz(gyf,tke,1);
 hke_int=trapz(gyf,(urms.^2+wrms.^2)/2,1);
 vke_int=trapz(gyf,vrms.^2/2,1);
 for n=1:N_TH
-  tpe_int(:,n)=RI(n)*trapz(gyf,thrms(:,:,n).^2,1)./(thme(end,:,n)-thme(1,:,n))/2;
+  tpe_int(1:nk,n)=RI(n)*trapz(gyf,thrms(:,1:nk,n).^2,1)./(thme(end,1:nk,n)-thme(1,1:nk,n))/2;
 end
 thv_int=trapz(gyf,thv,1);
 thrms_int=trapz(gyf,thrms,1);
@@ -240,6 +241,10 @@ thrms_int=trapz(gyf,thrms,1);
 for j=2:NY
   gy(j)=(gyf(j)+gyf(j-1))/2;    
 end
+
+% Optionally, get GY from hdf5 grid file
+%gy=h5read([run_dir '/grid.h5'],'/grids/y');
+
 for j=2:NY-1
   dyf(j)=(gy(j+1)-gy(j));
 end

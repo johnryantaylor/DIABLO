@@ -1,11 +1,13 @@
 % This script shows how to load in 2D slices and make a movie of the simulation output
 % Run after readmean.m
-LX=30;
-NX=128;
+LX=1000;
+NX=512;
 
 x=linspace(0,LX,NX);
 
 filename=[base_dir '/movie.h5'];
+
+drhodx=3e-8;
 
 for k=1:nk
 k
@@ -19,13 +21,22 @@ k
     timename=[int2str(k)];
   end
 
-varname=['/th1_xy/' timename];
+varname_th=['/th1_xy/' timename];
+varname_u=['/u_xy/' timename];
 %varname=['/nu_t_xy/' timename];
 
-A=h5read(filename,varname);
+A_th=h5read(filename,varname_th);
+A_u=h5read(filename,varname_u);
 
-pcolor(x,gyf,A'); shading interp;
-%caxis([-1.5 1.5]);
+for i=1:size(A_th,1)
+   A_th(i,:)=A_th(i,:)+drhodx*x(i);
+end
+
+pcolor(x,gyf,A_u'); shading interp;
+hold on
+contour(x,gyf,A_th',linspace(0,3e-4,40),'w-');
+caxis([-0.02 0.02]);
+title(['time=' num2str(tii(k)/3600) ' hours']);
 
 axis tight
 shading interp

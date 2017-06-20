@@ -9,7 +9,8 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       CHARACTER*20 GNAME
       LOGICAL FINAL
       integer i,j,k,n
-      real*8 uc, ubulk
+      real*8 uc, ubulk,zmean
+      real*8 zvar(0:NZP)
     
 ! This variable is used to add up scalar diagnostics
       real*8 thsum(0:NY+1)
@@ -533,17 +534,17 @@ C Apply Boundary conditions to velocity field
 #ifdef HDF5 
       if (MOVIE) then
          FNAME='movie.h5'
-      if (n.eq.1) then
          if (USE_MPI) then
          call mpi_barrier(MPI_COMM_WORLD,ierror)
          end if
+!          CALL INTEGRATE_Z_VAR(TH(:,:,:,n),varxy,MPI_COMM_Z)
          IF (RANKZ.EQ.RANKZMOVIE) THEN
             do I=0,NXM
             do J=1,NY
                varxy(i,j)=TH(i,NzMovie,j,n)
             end do
             end do
-            GNAME='th1_xy'
+            GNAME='th'//CHAR(n+48)//'_xy'
             call writeHDF5_xyplane(FNAME,GNAME,varxy)
          END IF
          if (USE_MPI) then
@@ -555,7 +556,7 @@ C Apply Boundary conditions to velocity field
                varxz(i,j)=TH(i,j,NyMovie,n)
             end do
             end do
-            GNAME='th1_xz'
+            GNAME='th'//CHAR(n+48)//'_xz'
             call writeHDF5_xzplane(FNAME,GNAME,varxz)
          END IF
          if (USE_MPI) then
@@ -566,44 +567,8 @@ C Apply Boundary conditions to velocity field
             varzy(i,j)=TH(NxMovie,i,j,n)
          end do
          end do
-         GNAME='th1_zy'
+         GNAME='th'//CHAR(n+48)//'_zy'
          call writeHDF5_zyplane(FNAME,GNAME,varzy)
-      else if (n.eq.2) then
-         if (USE_MPI) then
-         call mpi_barrier(MPI_COMM_WORLD,ierror)
-         end if
-         IF (RANKZ.EQ.RANKZMOVIE) THEN
-            do I=0,NXM
-            do J=1,NY
-               varxy(i,j)=TH(i,NzMovie,j,n)
-            end do
-            end do
-            GNAME='th2_xy'
-            call writeHDF5_xyplane(FNAME,GNAME,varxy)
-         END IF
-         if (USE_MPI) then
-         call mpi_barrier(MPI_COMM_WORLD,ierror)
-         end if
-         IF (RANKY.EQ.RANKYMOVIE) THEN
-            do I=0,NXM
-            do J=0,NZP-1
-               varxz(i,j)=TH(i,j,NyMovie,n)
-            end do
-            end do
-            GNAME='th2_xz'
-            call writeHDF5_xzplane(FNAME,GNAME,varxz)
-         END IF
-         if (USE_MPI) then
-         call mpi_barrier(MPI_COMM_WORLD,ierror)
-         end if
-         do I=0,NZP-1
-         do J=1,NY
-            varzy(i,j)=TH(NxMovie,i,j,n)
-         end do
-         end do
-         GNAME='th2_zy'
-         call writeHDF5_zyplane(FNAME,GNAME,varzy)
-      end if
 
       END IF
 #endif
@@ -703,6 +668,7 @@ C Apply Boundary conditions to velocity field
          if (USE_MPI) then
          call mpi_barrier(MPI_COMM_WORLD,ierror)
          end if
+!         CALL INTEGRATE_Z_VAR(U1(:,:,:),varxy,MPI_COMM_Z)
          IF (RANKZ.EQ.RANKZMOVIE) THEN
             do I=0,NXM
             do J=1,NY
@@ -716,6 +682,7 @@ C Apply Boundary conditions to velocity field
          if (USE_MPI) then
          call mpi_barrier(MPI_COMM_WORLD,ierror)
          end if
+!         CALL INTEGRATE_Z_VAR(U2(:,:,:),varxy,MPI_COMM_Z)
          IF (RANKZ.EQ.RANKZMOVIE) THEN
             do I=0,NXM
             do J=1,NY
@@ -729,6 +696,7 @@ C Apply Boundary conditions to velocity field
          if (USE_MPI) then
          call mpi_barrier(MPI_COMM_WORLD,ierror)
          end if
+!         CALL INTEGRATE_Z_VAR(U3(:,:,:),varxy,MPI_COMM_Z)
          IF (RANKZ.EQ.RANKZMOVIE) THEN
             do I=0,NXM
             do J=1,NY
@@ -743,6 +711,7 @@ C Apply Boundary conditions to velocity field
          if (USE_MPI) then
          call mpi_barrier(MPI_COMM_WORLD,ierror)
          end if
+!         CALL INTEGRATE_Z_VAR(NU_T(:,:,:),varxy,MPI_COMM_Z)
          IF (RANKZ.EQ.RANKZMOVIE) THEN
             do I=0,NXM
             do J=1,NY

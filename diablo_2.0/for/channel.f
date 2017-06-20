@@ -1447,6 +1447,8 @@ C Read input file.
         READ(11,*) DRHODX(N), DRHODZ(N)
       END DO
 
+      if (RANK.eq.0) write(*,*) 'I_RO: ',I_RO
+
       RETURN
       END
 
