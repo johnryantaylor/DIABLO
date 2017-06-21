@@ -762,7 +762,7 @@ C      which we have already made divergence free
 ! Apply the boundary conditions to our linear system
           END IF
 
-        DO J=JSTART_TH(N),JEND_TH(N)
+        DO J=JSTART_TH(N)-1,JEND_TH(N)+1
           DO I=0,NXM
             TH(I,K,J,N)=VEC(I,J)
           END DO
