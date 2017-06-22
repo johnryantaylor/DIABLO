@@ -318,6 +318,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
          SAVE_PRESSURE=.TRUE.
       else
          FNAME='out.'
+     &        //CHAR(MOD(TIME_STEP,1000000)/100000+48)
      &        //CHAR(MOD(TIME_STEP,100000)/10000+48)
      &        //CHAR(MOD(TIME_STEP,10000)/1000+48)
      &        //CHAR(MOD(TIME_STEP,1000)/100+48)
