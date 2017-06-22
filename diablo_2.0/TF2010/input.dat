@@ -1,0 +1,35 @@
+C A data file for diablo.  This is a generic, easy method of data
+C input, as long as you don't change the number of comment lines.
+C Note that the grid size is defined in the file grid_def.
+C   FLAVOR        VERSION    
+    'Front'        2.0        
+C   USE_MPI       USE_LES   (note, also change these flags in Makefile):
+    .TRUE.       .TRUE.               
+C Parameters:     NU,          BETA,       LX,       LY,     LZ
+                  0.000001      1.0       1000.0    50.0   250.0 
+C Vertical viscosity scale factor NU_V_SCALE (NU_V=NU*NU_V_SCALE)
+                  1.0  
+C Method:     NUM_PER_DIR, CREATE_NEW_FLOW
+                  2            .TRUE.        
+C Time March:  N_TIME_STEPS, TIME_LIMIT, DELTA_T, RESET_TIME, VARIABLE_DT, CFL, UPDATE_DT
+                 10000      500000       0.1      .FALSE.      .TRUE.     0.5      1
+C I/O:         VERBOSITY, SAVE_FLOW_INT, SAVE_STATS_INT,  MOVIE
+                   4         10000           100          .TRUE. 
+C Here include 6*N_TH lines, see below for format
+C         CREATE_FLOW_TH(1)  Create new field or Read from DIABLO_TH.START
+               .TRUE.
+C         FILTER_TH(1)         FILTER_INT(1)     (If and how often to filter)
+               .FALSE.              10
+C         RI_TAU(1)          PR(1)      
+             -0.00981         7.0        
+
+
+C When including scalar advection, include 6 lines like the following for each scalar
+
+C         CREATE_FLOW_TH(1)  Create new field or Read from DIABLO_TH.START
+               .TRUE.
+C         FILTER_TH(1)         FILTER_INT(1)     (If and how often to filter)
+               .TRUE.                10
+C         RI_TAU(1)      PR(1)       BACKGROUND_TH(N)
+             0.0             1.0          .FALSE.
+
