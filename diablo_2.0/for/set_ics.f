@@ -249,8 +249,8 @@ C particular problem of interest
            ELSE IF ((TH_BC_YMIN(N).EQ.1)
      &            .AND.(TH_BC_YMAX(N).EQ.1)) THEN
              DO J=1,NY
-! Linear profile with slope corresponding to upper value
-                TH(I,K,J,N)=TH_BC_YMAX_C1(N)*GYF(J)
+! Linear profile with slope corresponding to lower value
+                TH(I,K,J,N)=TH_BC_YMIN_C1(N)*GYF(J)
               END DO
            ELSE
              IF (RANK.EQ.0) then
