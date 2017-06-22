@@ -83,18 +83,6 @@ C Initialize in thermal wind balance:
            END DO
          END DO
        END DO
-      ELSE IF (IC_TYPE.eq.5) THEN
-       DO J=0,NY
-         DO K=0,NZP-1
-           DO I=0,NXM
-            U3(i,k,j)=GYF(J)*(1.56d-5/250.d0*(1.d0-(tanh((GX(i)-LX/2.d0)
-     &          /250.d0))**2.d0)-DRHODX(1))*RI(1)/I_RO
-            U1(i,k,j)=0.d0
-            U2(i,k,j)=0.d0
-!             P(i,k,j)=GYF(J)*1.d-3*tanh((GX(i)-LX/2.d0)/250.d0)*RI(1)
-           end do
-         end do
-       end do
       else
         WRITE(*,*) 'WARNING, unsupported IC_TYPE in CREATE_FLOW'
       end if
@@ -270,7 +258,10 @@ C particular problem of interest
          END DO
        END DO
        ELSE IF (IC_TYPE.eq.4) THEN
+<<<<<<< HEAD
        IF (N.eq.1) THEN
+=======
+>>>>>>> 2eaf3ebcf3c7a00725c95eb19dbc6e9744571a1c
 ! For Front case, specify given RI_B profile
        DO K=0,NZP-1
          DO I=0,NXM
@@ -292,6 +283,7 @@ C particular problem of interest
           END DO 
         END DO
       END DO
+<<<<<<< HEAD
       ELSE 
 ! Passive tracers
        DO K=0,NZP-1
@@ -311,6 +303,8 @@ C particular problem of interest
            END DO
          END DO
        END DO
+=======
+>>>>>>> 2eaf3ebcf3c7a00725c95eb19dbc6e9744571a1c
 
        ELSE
         WRITE(*,*) 'WARNING, unsupported IC_TYPE in CREATE_FLOW'

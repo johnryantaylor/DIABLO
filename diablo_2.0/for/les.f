@@ -89,10 +89,12 @@ C Apply Boundary conditions to velocity field
         U3_bar(J)=DBLE(CU3(0,0,J))
       END DO
       END IF 
+      IF (USE_MPI) THEN
             CALL MPI_BCAST(U1_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
             CALL MPI_BCAST(U3_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
+      END IF
 
 ! Convert the velocity to physical space
       call FFT_XZ_TO_PHYSICAL(CU1,U1,0,NY+1)

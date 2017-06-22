@@ -18,7 +18,7 @@ NU=1e-6;
 Pr=1;
 kappa=NU/Pr;
 % Enter the richardson number for each scalar
-RI(1:N_TH)=0.15;
+RI(1:N_TH)=1.0;
 % Set the start and end time in code units for start of averaging
 tstart=0; 
 %tend=999; % If tend isn't defined, tend will default to the final time
@@ -237,6 +237,7 @@ for n=1:N_TH
 end
 thv_int=trapz(gyf,thv,1);
 thrms_int=trapz(gyf,thrms,1);
+<<<<<<< HEAD
  
 for j=2:NY
   gy(j)=(gyf(j)+gyf(j-1))/2;    
@@ -244,6 +245,11 @@ end
 
 % Optionally, get GY from hdf5 grid file
 %gy=h5read([run_dir '/grid.h5'],'/grids/y');
+=======
+
+% Get GY from hdf5 grid file
+gy=h5read([base_dir '/grid.h5'],'/grids/y');
+>>>>>>> 2eaf3ebcf3c7a00725c95eb19dbc6e9744571a1c
 
 for j=2:NY-1
   dyf(j)=(gy(j+1)-gy(j));
@@ -260,4 +266,12 @@ for j=2:NY-1
   end
 end
 
+for n=1:N_TH
+for k=1:nk
+  thme_int(k,n)=0;
+  for j=2:NY-1
+    thme_int(k,n)=thme_int(k,n)+thme(j,k,n)*(gy(j+1)-gy(j));
+  end
+end
+end
 
