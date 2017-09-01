@@ -371,7 +371,6 @@ C This is already done for the viscous terms inside les_chan.f
          END DO
         END DO ! end do n
  
-
 ! Now, convert TH to physical space for calculation of nonlinear terms
         DO N=1,N_TH
           CS1(:,:,:)=CTH(:,:,:,N)

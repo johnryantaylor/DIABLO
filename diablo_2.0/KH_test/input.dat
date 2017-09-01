@@ -12,7 +12,7 @@ C Vertical viscosity scale factor NU_V_SCALE (NU_V=NU*NU_V_SCALE)
 C Method:     NUM_PER_DIR, CREATE_NEW_FLOW
                   2            .TRUE.        
 C Time March:  N_TIME_STEPS, TIME_LIMIT, DELTA_T, RESET_TIME, VARIABLE_DT, CFL, UPDATE_DT
-                 20000      500000       0.1      .FALSE.      .TRUE.     0.5      1
+                 1000      500000       0.1      .FALSE.      .TRUE.     0.5      1
 C I/O:         VERBOSITY, SAVE_FLOW_INT, SAVE_STATS_INT,  MOVIE
                    4          1000            20          .TRUE. 
 C Here include 6*N_TH lines, see below for format

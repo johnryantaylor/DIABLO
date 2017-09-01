@@ -12,7 +12,7 @@
       integer imin,jmin,kmin
 
 ! Set the initial dt to some arbitrary large number
-      dt=999.d0
+      dt=0.1d0
 
 ! Set the timestep based on viscosity and diffusivity
       dt=min(dt,0.5d0*min(dx(1),dy(1))/NU)
@@ -32,7 +32,7 @@
       end do
 
 ! Use the model velocity to calculate the CFL number
-      do j=1,NY
+      do j=1,NY-1
         do k=0,NZP-1
           do i=0,NXM
             dt_x=cfl*dx(i)/abs(U1(i,k,j))
