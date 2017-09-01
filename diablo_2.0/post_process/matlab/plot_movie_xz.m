@@ -1,8 +1,8 @@
 % Run after readmean.m
 LX=30;
-NX=128;
+NX=256;
 LZ=4;
-NZ=16;
+NZ=256;
 
 filename=[base_dir '/movie.h5'];
 
@@ -40,7 +40,7 @@ subplot(2,1,1)
 pcolor(x,z,A_th'); shading interp;
 set(gca,'FontName','Times','FontSize',14);
 xlabel('x'); ylabel('z'); title(['b, t=' num2str(tii(k)) ]);
-caxis([-1 1]);
+%caxis([-1 1]);
 colormap(jet(256));
 colorbar
 
@@ -48,7 +48,7 @@ subplot(2,1,2)
 pcolor(x,z,A_v'); shading interp;
 set(gca,'FontName','Times','FontSize',14);
 xlabel('x'); ylabel('z'); title(['v, t=' num2str(tii(k)) ]);
-caxis([-0.15 0.15]);
+%caxis([-0.15 0.15]);
 colormap(jet(256));
 colorbar
 

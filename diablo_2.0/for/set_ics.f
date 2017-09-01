@@ -199,14 +199,30 @@ C particular problem of interest
         IF (CREATE_NEW_TH(N)) THEN
 
       IF (IC_TYPE.eq.0) THEN
-! As an example, initialize TH1 with a sine in x
+
+
+      IF (N.eq.1) THEN
+! Plume fluid
        DO K=0,NZP-1
          DO I=0,NXM
            DO J=1,NY
-             TH(I,K,J,N)=sin(2.d0*PI*GX(I)/LX)/(4.d0*PI**2.d0)
+!             TH(I,K,J,N)=sin(2.d0*PI*GX(I)/LX)/(4.d0*PI**2.d0)
+             TH(I,K,J,N)=0.d0
            END DO
          END DO
        END DO
+      ELSE IF (N.eq.2) THEN
+! Ambient stratification
+       DO K=0,NZP-1
+         DO I=0,NXM
+           DO J=1,NY
+             TH(I,K,J,N)=0.0118d0*(GYF(J)**2.d0)
+!             TH(I,K,J,N)=0.00365d0*(GYF(J)**2.d0)
+           END DO
+         END DO
+       END DO
+       END IF
+
        ELSE IF ((IC_TYPE.eq.1).or.(IC_TYPE.eq.2)) THEN
 ! Initialize with a linear profile using the bcs
        DO K=0,NZP-1

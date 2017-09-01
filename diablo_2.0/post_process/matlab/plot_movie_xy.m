@@ -19,13 +19,14 @@ k
     timename=[int2str(k)];
   end
 
-varname=['/th1_xy/' timename];
-%varname=['/nu_t_xy/' timename];
+%varname=['/v_xy/' timename];
+varname=['/u_xy/' timename];
 
 A=h5read(filename,varname);
 
 pcolor(x,gyf,A'); shading interp;
-%caxis([-1.5 1.5]);
+%pcolor(A'); shading flat;
+%caxis([-0.1 0.1]);
 
 axis tight
 shading interp
