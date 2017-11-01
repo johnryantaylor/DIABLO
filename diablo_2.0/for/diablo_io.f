@@ -317,7 +317,14 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
          FNAME='end.h5'
          SAVE_PRESSURE=.TRUE.
       else
-         FNAME='out.h5'
+         FNAME='out.'
+     &        //CHAR(MOD(TIME_STEP,1000000)/100000+48)
+     &        //CHAR(MOD(TIME_STEP,100000)/10000+48)
+     &        //CHAR(MOD(TIME_STEP,10000)/1000+48)
+     &        //CHAR(MOD(TIME_STEP,1000)/100+48)
+     &        //CHAR(MOD(TIME_STEP,100)/10+48)
+     &        //CHAR(MOD(TIME_STEP,10)+48)
+     &        //'.h5'
       end if
       if (FNAME(len_trim(FNAME)-2:len_trim(FNAME)).eq.".h5") then
          IF (NUM_PER_DIR.NE.2) THEN
