@@ -205,7 +205,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       CHARACTER*55 FNAME_TH(N_TH)
       INTEGER I, J, K, N, NUM_PER_DIR_T
       
-      FNAME='diablo.start'
+!      FNAME='diablo.start'
       FNAME='start.h5'
       IF (RANK.EQ.0) 
      &     WRITE(6,*)   'Reading flow from ',FNAME

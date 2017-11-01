@@ -21,7 +21,7 @@ C if for the subgrid scalar dissipation
       real*8 U1_bar(0:NY+1)
  
       real*8 C_SMAG
-      parameter (C_SMAG=0.13d0)
+      parameter (C_SMAG=0.17d0)
       real*8 DELTA_Y(0:NY+1),DELTA_YF(0:NY+1) 
       real*8 alpha_sgs,beta_sgs
       real*8 denominator_sum
@@ -39,7 +39,7 @@ C if for the subgrid scalar dissipation
 ! Here, alpha is the test/LES filter width ratio
       parameter (alpha_sgs=2.449d0)
 ! beta is the LES/grid filter width ratio
-      parameter (beta_sgs=1.d0)
+      parameter (beta_sgs=1.5d0)
 
 ! Set the indices that are used when adding the off-diagnoal SGS stress terms
       IF (RANKY.eq.NPROCY-1) then
@@ -89,10 +89,12 @@ C Apply Boundary conditions to velocity field
         U3_bar(J)=DBLE(CU3(0,0,J))
       END DO
       END IF 
+      IF (USE_MPI) THEN
             CALL MPI_BCAST(U1_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
             CALL MPI_BCAST(U3_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
+      END IF
 
 ! Convert the velocity to physical space
       call FFT_XZ_TO_PHYSICAL(CU1,U1,0,NY+1)
@@ -191,7 +193,7 @@ C Apply Boundary conditions to velocity field
 ! At GYF points:
 ! Constant Smagorinsky
         DELTA_YF(J)=-2.d0*C_SMAG**2.d0
-     &     *(DX(1)*beta_sgs*DYF(J)*2.d0*DZ(1)*beta_sgs)**(2.d0/3.d0)
+     &     *(DX(1)*beta_sgs*DYF(J)*1.d0*DZ(1)*beta_sgs)**(2.d0/3.d0)
 ! Wall Damping
 !        DELTA_YF(J)=
 !     &    -2.d0*(0.1d0*(1.d0-exp((-GYF(J)/(NU*25.d0))**3.d0)))**2.d0

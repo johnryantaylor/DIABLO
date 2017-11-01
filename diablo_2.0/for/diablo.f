@@ -85,6 +85,14 @@ C A flag to determine if we are considering the first time-step
         TIME=TIME+DELTA_T
         FIRST_TIME=.FALSE.
 
+! Optionally apply a filter to the scalar field
+        DO N=1,N_TH
+          IF (FILTER_TH(N)
+     &       .AND.(MOD(TIME_STEP,FILTER_INT(N)).EQ.0)) THEN
+             CALL FILTER_CHAN(N)
+          END IF
+        END DO
+
 ! Save statistics to an output file
         IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
             CALL SAVE_STATS(.FALSE.)

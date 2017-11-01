@@ -258,6 +258,7 @@ C particular problem of interest
          END DO
        END DO
        ELSE IF (IC_TYPE.eq.4) THEN
+       IF (N.eq.1) THEN
 ! For Front case, specify given RI_B profile
        DO K=0,NZP-1
          DO I=0,NXM
@@ -279,6 +280,25 @@ C particular problem of interest
           END DO 
         END DO
       END DO
+      ELSE 
+! Passive tracers
+       DO K=0,NZP-1
+         DO I=0,NXM
+           DO J=1,NY
+             TH(I,K,J,N)=exp(GYF(J)/10.d0)
+           END DO
+         END DO
+       END DO
+      END IF
+      ELSE IF (IC_TYPE.eq.5) THEN
+       DO K=0,NZP-1
+         DO I=0,NXM
+           DO J=1,NY
+             TH(I,K,J,N)=1.56d-5*tanh((GX(i)-LX/2.d0)/250.d0)
+     &            -DRHODX(N)*GX(i)
+           END DO
+         END DO
+       END DO
 
        ELSE
         WRITE(*,*) 'WARNING, unsupported IC_TYPE in CREATE_FLOW'
