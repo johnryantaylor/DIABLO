@@ -146,7 +146,6 @@
         CALL SPONGE_TH(N)
       END DO
       CALL SPONGE_VEL
->>>>>>> Added thermal wind advection and sponge layers
 
       RETURN 
       END
