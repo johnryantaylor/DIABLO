@@ -435,14 +435,6 @@ C Note, that each cell has the same volume, so we can just average over all poin
       RETURN 
       END
  
-=======
-        do j=0,NY+1
-          CFTH(0,0,j,n)=CFTH(0,0,j,n)-SPONGE_SIGMA(j)
-     &          *(CTH(0,0,j,n)-TH_0(J))
-        end do
-
-      return
-      end
   
       SUBROUTINE SPONGE_VEL
 ! This subroutine applies a sponge relaxation (Rayleigh damping) towards a
