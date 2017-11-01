@@ -247,17 +247,15 @@ C Note, that each cell has the same volume, so we can just average over all poin
 ! The following variables will store the background state
       real*8 TH_0(-1:NY+1)
 
-      real*8 RI_B(0:NY+1)
-
 ! This variable will hold the forcing rate
       real*8 SPONGE_SIGMA(0:NY+1)
 
 ! Set the amplitude of the sponge
-      SPONGE_AMP=0.0001d0
+      SPONGE_AMP=0.005d0
 ! Set the top of the sponge layer in physical units
-      L_sponge=-120.d0
+      L_sponge=-40.d0
 ! Set the bottom of the computational domain in physical units
-      L_bottom=-140.d0
+      L_bottom=-50.d0
         DO J=0,NY+1
 ! Quadratic damping at lower wall
          if (GYF(J).lt.L_sponge) then
@@ -321,11 +319,11 @@ C Note, that each cell has the same volume, so we can just average over all poin
       real*8 SPONGE_SIGMA(0:NY+1)
 
 ! Set the amplitude of the sponge
-      SPONGE_AMP=0.0001d0
+      SPONGE_AMP=0.005d0
 ! Set the top of the sponge layer in physical units
-      L_sponge=-120.d0
+      L_sponge=-40.d0
 ! Set the bottom of the computational domain in physical units
-      L_bottom=-140.d0
+      L_bottom=-50.d0
         DO J=0,NY+1
 ! Quadratic damping at lower wall
          if (GYF(J).lt.L_sponge) then
