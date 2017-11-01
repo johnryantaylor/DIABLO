@@ -1202,6 +1202,24 @@ C prevent the tridiagonal matrix from becomming singular for i,k=0
  
       RETURN
       END
+
+
+      SUBROUTINE APPLY_BC_VEL_PHYS_MPI
+! This subroutine applies the boundary conditions for the Poisson Eq.
+! Note, MATL, MATD, etc. are dimensioned in header
+      INCLUDE 'header'
+
+! Apply Boundary conditions to velocity field
+      IF (RANKY.EQ.0) THEN
+        CALL APPLY_BC_VEL_PHYS_LOWER
+      END IF
+      IF (RANKY.EQ.NPROCY-1) THEN
+        CALL APPLY_BC_VEL_PHYS_UPPER
+      END IF
+
+      RETURN
+      END
+
  
       SUBROUTINE TRANSPOSE_MPI_XZ_TO_XY()
 ! This subroutine starts with all arrays decomposed in x-z slabs

@@ -306,6 +306,10 @@ C spinup before applying the subgrid model for stability purposes
 C In the process, Ui is converted to physical space
           call les_chan
 
+C Re-apply the boundary conditions for velocity
+C In the case of Neumann (applied stress) BCs, these were changed in the LES
+          call APPLY_BC_VEL_PHYS_MPI
+
 C APPLY constant SGS Prandlt number
          DO N=1,N_TH
          do j=1,NY+1
@@ -2487,6 +2491,163 @@ C (initialize as zero gradient)
       RETURN
       END
 
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+      SUBROUTINE APPLY_BC_VEL_PHYS_LOWER
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+C This subroutine is called after initializing the flow
+C It sets the appropriate boundary conditions including ghost cell values
+C  on the velocity field in Physical space
+      INCLUDE 'header'
+      INTEGER I,K      
+
+C Now, apply the boundary conditions depending on the type specified 
+      IF (U_BC_YMIN.EQ.0) THEN
+C Dirichlet 
+C Start with zero
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U1(I,K,0)=U_BC_YMIN_C1
+             U1(I,K,1)=U_BC_YMIN_C1
+           END DO
+         END DO
+      ELSE IF (U_BC_YMIN.EQ.1) THEN
+C Neumann
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U1(I,K,1)=U1(I,K,2)-DY(2)*U_BC_YMIN_C1
+             U1(I,K,0)=U1(I,K,1)-DY(1)*U_BC_YMIN_C1
+           END DO
+         END DO
+      ELSE
+         STOP 'Error: U_BC_YMIN must be 0, or 1'
+      END IF
+
+      IF (W_BC_YMIN.EQ.0) THEN
+C Dirichlet
+C Start with zero
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U3(I,K,0)=W_BC_YMIN_C1
+             U3(I,K,1)=W_BC_YMIN_C1
+           END DO
+         END DO
+      ELSE IF (W_BC_YMIN.EQ.1) THEN
+C Neumann
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U3(I,K,1)=U3(I,K,2)-DY(2)*W_BC_YMIN_C1
+             U3(I,K,0)=U3(I,K,1)-DY(1)*W_BC_YMIN_C1
+           END DO
+         END DO
+      ELSE
+         STOP 'Error: W_BC_YMIN must be 0, or 1' 
+      END IF
+
+      IF (V_BC_YMIN.EQ.0) THEN
+C Dirichlet
+C Set the vertical velocity at GYF(1) (halfway between GY(2) and GY(1))
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U2(I,K,1)=2.d0*V_BC_YMIN_C1-U2(I,K,2)  
+             U2(I,K,0)=U2(I,K,1)  
+           END DO
+         END DO
+      ELSE IF (V_BC_YMIN.EQ.1) THEN
+C Neumann
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U2(I,K,1)=U2(I,K,2)-DYF(1)*V_BC_YMIN_C1
+             U2(I,K,0)=U2(I,K,1)-DYF(1)*V_BC_YMIN_C1
+           END DO
+         END DO
+C      ELSE IF (V_BC_YMIN.EQ.2) THEN
+C Upstream-travelling wave proposed by Speyer/Kim
+C (initialize as zero)
+C         IF (RANKZ.EQ.0) CU2(0,0,1)=-CU2(0,0,2)
+      ELSE
+         STOP 'Error: V_BC_YMIN must be 0, 1'
+      END IF
+
+      RETURN
+      END
+
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+      SUBROUTINE APPLY_BC_VEL_PHYS_UPPER
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+C This subroutine is called after initializing the flow
+C It sets the appropriate boundary conditions including ghost cell values
+C  on the velocity field in Fourier space
+      INCLUDE 'header'
+      INTEGER I,K      
+
+! Now, apply boundary conditions to the top of the domain
+      IF (U_BC_YMAX.EQ.0) THEN
+C Dirichlet 
+C Start with zero
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U1(I,K,NY)=U_BC_YMAX_C1
+             U1(I,K,NY+1)=U_BC_YMAX_C1
+           END DO
+         END DO
+      ELSE IF (U_BC_YMAX.EQ.1) THEN
+C Neumann
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U1(I,K,NY)=U1(I,K,NY-1)+DY(NY)*U_BC_YMAX_C1
+             U1(I,K,NY+1)=U1(I,K,NY)+DY(NY)*U_BC_YMAX_C1
+           END DO
+         END DO
+      ELSE
+         STOP 'Error: U_BC_YMAX must be 0, or 1'
+      END IF
+
+      IF (W_BC_YMAX.EQ.0) THEN
+C Dirichlet
+C Start with zero
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U3(I,K,NY)=W_BC_YMAX_C1
+             U3(I,K,NY+1)=W_BC_YMAX_C1
+           END DO
+         END DO
+      ELSE IF (W_BC_YMAX.EQ.1) THEN
+C Neumann
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U3(I,K,NY)=U3(I,K,NY-1)+DY(NY)*W_BC_YMAX_C1
+             U3(I,K,NY+1)=U3(I,K,NY)+DY(NY)*W_BC_YMAX_C1
+           END DO
+         END DO
+      ELSE
+        STOP 'Error: W_BC_YMAX must be 0, or 1'
+      END IF
+
+      IF (V_BC_YMAX.EQ.0) THEN
+C Dirichlet
+C Set the vertical velocity at GYF(NY) (halfway between GY(NY) and GY(NY+1))
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U2(I,K,NY+1)=2.d0*V_BC_YMAX_C1-U2(I,K,NY)
+           END DO
+         END DO
+      ELSE IF (V_BC_YMAX.EQ.1) THEN
+C Neumann
+        DO K=0,NZP-1
+          DO I=0,NXM
+             U2(I,K,NY+1)=U2(I,K,NY)+DY(NY)*V_BC_YMAX_C1
+           END DO
+         END DO
+C      ELSE IF (V_BC_YMAX.EQ.2) THEN
+C Upstream-travelling wave proposed by Speyer/Kim
+C (initialize as zero gradient)
+C         IF (RANKZ.EQ.0) CU2(0,0,NY+1)=-CU2(0,0,NY)
+      ELSE
+         STOP 'Error: V_BC_YMAX must be 0, 1'
+      END IF
+
+      RETURN
+      END
 
 C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       SUBROUTINE THOMAS_REAL(A,B,C,G,NY,NX)
