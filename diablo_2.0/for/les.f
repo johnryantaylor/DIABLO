@@ -120,7 +120,6 @@ C Apply Boundary conditions to velocity field
      &                           -0.5d0*(U1_bar(J)-U1_bar(J-1))/DY(J)
      &                           -0.5d0*(U1_bar(J+1)-U1_bar(J))/DY(J+1)
      &     ))**2.d0
-! end edit
      &               +4.d0*Sij5(I,K,J)**2.d0
      &               +2.d0*Sij2(I,K,J)**2.d0
      &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij6(I,K,J)
