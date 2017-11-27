@@ -383,7 +383,7 @@ C Apply Boundary conditions to velocity field
       call WriteStatH5(FNAME,gname,Diag)
 
       gname='wv'
-      Diag=uw(1:NY)
+      Diag=wv(1:NY)
       call WriteStatH5(FNAME,gname,Diag)
 
       gname='dudy'
