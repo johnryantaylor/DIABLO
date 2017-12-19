@@ -48,10 +48,6 @@ for k=1:nk
     epsilon(:,k)=h5read(filename,varname);
 end
 
-% epsilon hasn't yet been multiplied by NU, do that here
-epsilon=epsilon*NU;
-
-
 % Get the time index based on start time
 kstart=0;
 for k=1:nk
