@@ -1129,8 +1129,8 @@ C Convert velocity back to Fourier space
       end do
       end do
       end do
-      do j=2,NYM
-        epsilon(j)=epsilon(j)/float(NX*NZ)
+      do j=1,NY
+        epsilon(j)=NU*epsilon(j)/float(NX*NZ)
       end do
       call mpi_allreduce(mpi_in_place,epsilon,NY+2,MPI_DOUBLE_PRECISION,
      &     MPI_SUM,MPI_COMM_Z,ierror)
