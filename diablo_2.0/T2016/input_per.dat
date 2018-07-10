@@ -1,0 +1,35 @@
+C A data file for diablo.  This is a generic, easy method of data
+C input, as long as you don't change the number of comment lines.
+C Note that the grid size is defined in the file grid_def.
+C VERSION
+    1.0
+C TIME_AD_METH
+      1              
+C LES:   LES_MODEL_TYPE
+               2            
+C ICs:    IC_TYPE,    KICK
+              0       .0010
+C FLAGS:   TRUCK,    GUST,    
+           .FALSE.    .FALSE.   
+C BACKGROUND_GRAD(N): Include this and the next three lines for each scalar
+           .FALSE.          
+C BACTERIAL MOTILITY CHI(N):
+              0.0
+C BACKGROUND_GRAD(N): Include one of the following lines for each scalar
+           .FALSE.          
+C BACTERIAL MOTILITY CHI(N):
+           0.001
+C BACKGROUND_GRAD(N): Include one of the following lines for each scalar
+           .FALSE.          
+C BACTERIAL MOTILITY CHI(N):
+           0.01 
+
+
+
+
+
+C Description
+C For triply-periodic flows (NUM_PER_DIR=3):
+C IC_TYPE specifies the functional form for the initial velocity
+C KICK is a scale factor on the noise added when creating a new flow.
+C BACKGROUND_GRAD(N) specifies if the scalar should be considered as a perturbation to a linear background gradient. This is designed to allow simulations of stratified flows in the triply periodic flow geometry.

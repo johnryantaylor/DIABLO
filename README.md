@@ -1,6 +1,9 @@
 # DIABLO
 DNS In A Box...Laptop Optimized!
 
+This branch includes background density gradients and thermal wind
+and is designed for frontal zone simulations
+
 A brief description of DIABLO
 
 diablo.f        Main program, define grid, read/write flow, statistics

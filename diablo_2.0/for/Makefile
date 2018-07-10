@@ -78,11 +78,11 @@ NETCDF_o = no_netcdf.o
 endif
 
 diablo: $(MAIN) diablo_io.o periodic.o channel.o courant.o $(LES_o) \
-	duct.o cavity.o fft.o rand.o set_ics.o save_stats.o user_rhs.o $(MPI) \
+	duct.o cavity.o fft.o rand.o set_ics.o save_stats.o filter.o user_rhs.o $(MPI) \
 	$(HEADER) grid_def $(HDF5_o)
 	$(COMPILER) $(COMPOPTS) $(MAIN) -o diablo \
 	diablo_io.o periodic.o channel.o courant.o $(LES_o) \
-	duct.o cavity.o fft.o rand.o set_ics.o save_stats.o user_rhs.o \
+	duct.o cavity.o fft.o rand.o set_ics.o save_stats.o filter.o user_rhs.o \
 	$(MPI) $(LINKOPTS) $(HDF5_o)
 
 diablo_io.o: diablo_io.f header grid_def
@@ -99,6 +99,9 @@ set_ics.o: set_ics.f channel.o fft.o $(MPI) header grid_def
 
 save_stats.o: save_stats.f channel.o fft.o $(MPI) header grid_def
 	$(COMPILER) $(COMPOPTS) -c save_stats.f
+
+filter.o: filter.f channel.o fft.o $(MPI) header grid_def
+	$(COMPILER) $(COMPOPTS) -c filter.f
 
 user_rhs.o: user_rhs.f channel.o fft.o $(MPI) header grid_def
 	$(COMPILER) $(COMPOPTS) -c user_rhs.f

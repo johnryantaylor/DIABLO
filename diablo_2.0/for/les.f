@@ -21,7 +21,7 @@ C if for the subgrid scalar dissipation
       real*8 U1_bar(0:NY+1)
  
       real*8 C_SMAG
-      parameter (C_SMAG=0.13d0)
+      parameter (C_SMAG=0.17d0)
       real*8 DELTA_Y(0:NY+1),DELTA_YF(0:NY+1) 
       real*8 alpha_sgs,beta_sgs
       real*8 denominator_sum
@@ -39,7 +39,7 @@ C if for the subgrid scalar dissipation
 ! Here, alpha is the test/LES filter width ratio
       parameter (alpha_sgs=2.449d0)
 ! beta is the LES/grid filter width ratio
-      parameter (beta_sgs=1.d0)
+      parameter (beta_sgs=1.5d0)
 
 ! Set the indices that are used when adding the off-diagnoal SGS stress terms
       IF (RANKY.eq.NPROCY-1) then
@@ -89,15 +89,12 @@ C Apply Boundary conditions to velocity field
         U3_bar(J)=DBLE(CU3(0,0,J))
       END DO
       END IF 
+      IF (USE_MPI) THEN
             CALL MPI_BCAST(U1_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
             CALL MPI_BCAST(U3_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
-
-!        IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
-!           WRITE(*,*) RANK,GYF(78),U1_bar(78),U3_bar(78) 
-!        END IF
-
+      END IF
 
 ! Convert the velocity to physical space
       call FFT_XZ_TO_PHYSICAL(CU1,U1,0,NY+1)
@@ -120,7 +117,6 @@ C Apply Boundary conditions to velocity field
      &                           -0.5d0*(U1_bar(J)-U1_bar(J-1))/DY(J)
      &                           -0.5d0*(U1_bar(J+1)-U1_bar(J))/DY(J+1)
      &     ))**2.d0
-! end edit
      &               +4.d0*Sij5(I,K,J)**2.d0
      &               +2.d0*Sij2(I,K,J)**2.d0
      &               +4.d0*(0.5d0*(Sij6(I,K,J+1)+Sij6(I,K,J)
@@ -197,7 +193,7 @@ C Apply Boundary conditions to velocity field
 ! At GYF points:
 ! Constant Smagorinsky
         DELTA_YF(J)=-2.d0*C_SMAG**2.d0
-     &     *(DX(1)*beta_sgs*DYF(J)*2.d0*DZ(1)*beta_sgs)**(2.d0/3.d0)
+     &     *(DX(1)*beta_sgs*DYF(J)*1.d0*DZ(1)*beta_sgs)**(2.d0/3.d0)
 ! Wall Damping
 !        DELTA_YF(J)=
 !     &    -2.d0*(0.1d0*(1.d0-exp((-GYF(J)/(NU*25.d0))**3.d0)))**2.d0
@@ -282,23 +278,23 @@ C Apply Boundary conditions to velocity field
           DO I=0,NXP-1
             CF1(I,K,J)=CF1(I,K,J)
      &                -CIKX(I)*CSij1(I,K,J)
-     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
-     &                -CIKZ(K)*CSij5(I,K,J)
-            CF3(I,K,J)=CF3(I,K,J)
-     &                -CIKX(I)*CSij5(I,K,J)
-     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
-     &                -CIKZ(K)*CSij3(I,K,J)   
+!     &                -(CSij4(I,K,J+1)-CSij4(I,K,J))/DYF(j)
+!     &                -CIKZ(K)*CSij5(I,K,J)
+!            CF3(I,K,J)=CF3(I,K,J)
+!     &                -CIKX(I)*CSij5(I,K,J)
+!     &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
+!     &                -CIKZ(K)*CSij3(I,K,J)   
           END DO
         END DO
       END DO
       DO J=2,NY
        DO K=0,TNKZ
          DO I=0,NXP-1
-           CF2(I,K,J)=CF2(I,K,J)
-     &                -CIKX(I)*CSij4(I,K,J)
+!           CF2(I,K,J)=CF2(I,K,J)
+!     &                -CIKX(I)*CSij4(I,K,J)
 ! Sij2 is added through an implict eddy viscosity
 !     &                -(CSij2(I,K,J)-CSij2(I,K,J-1))/DY(j)
-     &                -CIKZ(K)*CSij6(I,K,J)
+!     &                -CIKZ(K)*CSij6(I,K,J)
           END DO
         END DO
       END DO
@@ -315,7 +311,7 @@ C Apply Boundary conditions to velocity field
       DO K=0,TNKZ
         DO I=0,NXP-1
           DO J=2,NY
-            CF2(I,K,J)=CF2(I,K,J)+CIKX(I)*CTEMP(I,K,J)
+!            CF2(I,K,J)=CF2(I,K,J)+CIKX(I)*CTEMP(I,K,J)
           END DO
         END DO
       END DO
@@ -330,7 +326,7 @@ C Apply Boundary conditions to velocity field
       DO K=0,TNKZ
         DO I=0,NXP-1
           DO J=2,NY
-            CF2(I,K,J)=CF2(I,K,J)+CIKZ(K)*CTEMP(I,K,J)
+!            CF2(I,K,J)=CF2(I,K,J)+CIKZ(K)*CTEMP(I,K,J)
           END DO
         END DO
       END DO

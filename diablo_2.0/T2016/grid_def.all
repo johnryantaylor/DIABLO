@@ -1,8 +1,8 @@
 !----*|--.---------.---------.---------.---------.---------.---------.-|-------|
 ! grid_def, the portion of the header that defines the grid size for diablo.
 !----*|--.---------.---------.---------.---------.---------.---------.-|-------|
-      PARAMETER (NX=256)
-      PARAMETER (NY=26)
-      PARAMETER (NZ=64)
-      PARAMETER (N_TH=9)
+      PARAMETER (NX=512)
+      PARAMETER (NY=65)
+      PARAMETER (NZ=512)
+      PARAMETER (N_TH=1)
 !----*|--.---------.---------.---------.---------.---------.---------.-|-------|

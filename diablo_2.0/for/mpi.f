@@ -325,12 +325,17 @@
       END IF
 
       ELSE
-! HERE, NPROCY=1, so just apply the boundary conditions to set NU=0 at the
-! top and bottom walls
+! Here, NPROCY=1, so we just need to set the boundary values
+! Set NU_T=0 at the lower wall
         DO K=0,NZP-1
           DO I=0,NXM
             NU_T(I,K,1)=0.d0
             NU_T(I,K,2)=0.d0
+          END DO
+        END DO
+! Set NU_T=0 at the upper wall
+        DO K=0,NZP-1
+          DO I=0,NXM
             NU_T(I,K,NY)=0.d0
             NU_T(I,K,NY+1)=0.d0
           END DO
@@ -1453,6 +1458,40 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
          end do
       END IF
       RES=RES/LY      
+
+      END SUBROUTINE
+
+
+      SUBROUTINE INTEGRATE_Z_VAR(VAR,RES,COMM)
+
+      INCLUDE 'header'
+
+      INTEGER i,k,j,COMM
+      REAL*8 VAR(0:NX+1,0:NZP+1,0:NY+1),RES(0:NXM,1:NY)
+
+! Integrat the instantaneous mean profile numerically at GY points
+      IF (USE_MPI) THEN
+        do i=0,NXM
+        do j=1,NY
+        RES(i,j)=0.
+         do k=0,NZP
+            RES(i,j)=RES(i,j)+VAR(i,k,j)*DZ(k)
+         end do
+        end do
+        end do
+         call MPI_ALLREDUCE(MPI_IN_PLACE,RES,NX*NY,
+     &        MPI_DOUBLE_PRECISION,MPI_SUM,COMM,ierror)
+         call MPI_BARRIER(MPI_COMM_WORLD,IERROR)
+      ELSE
+      do i=0,NXM
+      do j=1,NY
+         do k=0,NZM
+            RES(i,j)=RES(i,j)+VAR(i,k,j)*DZ(k)
+         end do
+      end do
+      end do
+      END IF
+      RES=RES/LZ     
 
       END SUBROUTINE
 

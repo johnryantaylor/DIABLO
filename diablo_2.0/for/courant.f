@@ -12,7 +12,7 @@
       integer imin,jmin,kmin
 
 ! Set the initial dt to some arbitrary large number
-      dt=999.d0
+      dt=50.d0
 
 ! Set the timestep based on viscosity and diffusivity
       dt=min(dt,0.5d0*min(dx(1),dy(1))/NU)
@@ -32,6 +32,24 @@
       end do
 
 ! Use the model velocity to calculate the CFL number
+
+      IF (FLAVOR.eq.'Front') THEN
+! Add thermal wind to velocity when calculating the CFL number
+      do n=1,N_TH
+      do j=JSTART,JEND
+        do k=0,NZP-1
+          do i=0,NXM
+            dt_x=cfl*dx(i)/abs(U1(i,k,j)-1.d0*DRHODZ(N)*RI(N)
+     &                          *GYF(J)/I_RO)
+            dt_y=cfl*dy(j)/abs(U2(i,k,j))
+            dt_z=cfl*dz(k)/abs(U3(i,k,j)+(RI(N)/I_RO)
+     &                          *DRHODX(N)*GYF(J))
+            dt=min(dt,dt_x,dt_y,dt_z)
+           end do
+         end do
+       end do
+      end do
+      ELSE
       do j=1,NY
         do k=0,NZP-1
           do i=0,NXM
@@ -42,6 +60,8 @@
           end do
         end do
       end do
+      END IF
+
       if (USE_MPI) then
          call get_minimum_mpi(dt)
       end if

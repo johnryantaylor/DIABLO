@@ -71,6 +71,18 @@ C Tanh shear layer
            END DO
          END DO
        END DO
+      else if (IC_TYPE.eq.4) then
+C For Front
+C Initialize in thermal wind balance: 
+       DO J=0,NY
+         DO K=0,NZP-1
+           DO I=0,NXM
+             U1(I,K,J)=0.d0
+             U2(I,K,J)=0.d0
+             U3(I,K,J)=0.d0
+           END DO
+         END DO
+       END DO
       else
         WRITE(*,*) 'WARNING, unsupported IC_TYPE in CREATE_FLOW'
       end if
@@ -194,6 +206,8 @@ C particular problem of interest
 
       INCLUDE 'header'
       INTEGER I,J,K,N
+! A variable for Front case...
+      REAL*8 RI_B(0:NY+1)
 
       DO N=1,N_TH
         IF (CREATE_NEW_TH(N)) THEN
@@ -223,8 +237,8 @@ C particular problem of interest
            ELSE IF ((TH_BC_YMIN(N).EQ.1)
      &            .AND.(TH_BC_YMAX(N).EQ.1)) THEN
              DO J=1,NY
-! Linear profile with slope corresponding to upper value
-                TH(I,K,J,N)=TH_BC_YMAX_C1(N)*GYF(J)
+! Linear profile with slope corresponding to lower value
+                TH(I,K,J,N)=TH_BC_YMIN_C1(N)*GYF(J)
               END DO
            ELSE
              IF (RANK.EQ.0) then
@@ -243,6 +257,49 @@ C particular problem of interest
            END DO
          END DO
        END DO
+       ELSE IF (IC_TYPE.eq.4) THEN
+       IF (N.eq.1) THEN
+! For Front case, specify given RI_B profile
+       DO K=0,NZP-1
+         DO I=0,NXM
+          TH(I,K,0,N)=0.d0
+           DO J=1,NY
+             if (GYF(J).lt.-60.d0) then
+               RI_B(J)=20.d0
+               TH(I,K,J,N)=(GYF(J)-GYF(1))*
+     &                    RI_B(J)*(RI(N)*DRHODX(N))**2.d0
+     &                    /I_RO**2.d0/RI(N)
+             else
+                   RI_B(J)=1.0d0
+                   TH(I,K,J,N)=(GYF(J)+60.d0)*
+     &                    RI_B(J)*(RI(N)*DRHODX(N))**2.d0
+     &                    /I_RO**2.d0/RI(N)
+     &                   +(-60+140.d0)*20.d0*(RI(N)*DRHODX(N))**2.d0
+     &                    /I_RO**2.d0/RI(N)
+             end if
+          END DO 
+        END DO
+      END DO
+      ELSE 
+! Passive tracers
+       DO K=0,NZP-1
+         DO I=0,NXM
+           DO J=1,NY
+             TH(I,K,J,N)=exp(GYF(J)/10.d0)
+           END DO
+         END DO
+       END DO
+      END IF
+      ELSE IF (IC_TYPE.eq.5) THEN
+       DO K=0,NZP-1
+         DO I=0,NXM
+           DO J=1,NY
+             TH(I,K,J,N)=1.56d-5*tanh((GX(i)-LX/2.d0)/250.d0)
+     &            -DRHODX(N)*GX(i)
+           END DO
+         END DO
+       END DO
+
        ELSE
         WRITE(*,*) 'WARNING, unsupported IC_TYPE in CREATE_FLOW'
         END IF
