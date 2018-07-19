@@ -284,7 +284,7 @@
       INTEGER NSAMPLES
 
       COMMON /STAT_VARS/ THBAR, THRMS, UBAR, VBAR, WBAR, URMS, URMS_B,
-     &          VRMS_B,WRMS_B,TKE_B,WRMS, VRMS,UV,WV,UW, NSAMPLES
+     &   UME,VME,WME,VRMS_B,WRMS_B,TKE_B,WRMS, VRMS,UV,WV,UW, NSAMPLES
 
 !----*|--.---------.---------.---------.---------.---------.---------.-|-------|
 ! Variable viscosity parameters
