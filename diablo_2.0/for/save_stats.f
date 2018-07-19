@@ -165,6 +165,10 @@ C Apply Boundary conditions to velocity field
       call fft_xz_to_physical(CU2,U2,0,NY+1)
       call fft_xz_to_physical(CU3,U3,0,NY+1)
 
+! Calculate the dissipation rate
+      call tkebudget_chan
+      IF (LES) call tkebudget_chan_les
+
 ! Get the turbulent kinetic energy at each level 
       do j=1,NY
         urms(j)=0.
@@ -199,18 +203,22 @@ C Apply Boundary conditions to velocity field
       CALL INTEGRATE_Y_VAR(wrms,wrms_b,MPI_COMM_Y)
 
 ! Compute the Reynolds stress and mean velocity gradient
+! Here, uv and wv are defined on the GY grid
+! uv is defined on the GYF grid
       do j=1,NY
         uv(j)=0. 
         uw(j)=0.
         wv(j)=0.
       do k=0,NZP-1
       do i=0,NXM
-        uv(j)=uv(j)+(U1(i,k,j)-ume(j))
-     +    *(0.5*(U2(i,k,j)+U2(i,k,j+1))
-     &    -0.5*(vme(j)+vme(j+1)))
-        wv(j)=wv(j)+(U3(i,k,j)-wme(j))
-     +    *(0.5*(U2(i,k,j)+U2(i,k,j+1))
-     &    -0.5*(vme(j)+vme(j+1)))
+        uv(j)=uv(j)+
+     &     (DYF(j-1)*(U1(i,k,j)-ume(j))+DYF(j)*(U1(i,k,j-1)-ume(j-1)))
+     &             /(2.d0*DY(J))
+     &     *(U2(i,k,j)-vme(j))
+        wv(j)=wv(j)+
+     &     (DYF(j-1)*(U3(i,k,j)-wme(j))+DYF(j)*(U3(i,k,j-1)-wme(j-1)))
+     &             /(2.d0*DY(J))
+     &     *(U2(i,k,j)-vme(j))
         uw(j)=uw(j)+(U1(i,k,j)-ume(j))
      +    *(U3(i,k,j)-wme(j))
       end do
@@ -439,9 +447,6 @@ C Apply Boundary conditions to velocity field
 401   format(I3,' ',17(F30.20,' '))
 #endif
 
-! Calculate the dissipation rate
-      call tkebudget_chan
-      IF (LES) call tkebudget_chan_les
 
 ! Do over the number of passive scalars
       do n=1,N_TH
@@ -958,16 +963,22 @@ C Convert velocity back to Fourier space
 
 
       subroutine tkebudget_chan
-! NOte, it is important to only run this routine after complete R-K
-!  time advancement since F1 is overwritten which is needed between R-K steps
+! Calculate the turbulent dissipation rate, epsilon
+! Note that this is actually the pseudo-dissipation (see Pope, Turb. Flows)
+! for an explanation
       include 'header'
 
       character*35 FNAME
       character*20 GNAME
       real*8 Diag(1:NY)
+      real*8 varxy(0:NXM,1:NY),varzy(0:NZP-1,1:NY),varxz(0:NXM,0:NZP-1)
       integer i,j,k
 
+! Store the 3D dissipation rate in F1
+      F1(:,:,:)=0.d0
+
 ! Compute the turbulent dissipation rate, epsilon=nu*<du_i/dx_j du_i/dx_j>
+! epsilon will be calculated on the GY grid
       do j=1,NY
         epsilon(j)=0.
       end do
@@ -986,6 +997,8 @@ C Convert velocity back to Fourier space
       do i=0,NXM
          epsilon(j)=epsilon(j)+(DYF(j-1)*S1(i,k,j)**2.d0
      &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
+         F1(i,k,j)=F1(i,k,j)+(DYF(j-1)*S1(i,k,j)**2.d0
+     &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
       end do
       end do
       end do
@@ -1003,15 +1016,16 @@ C Convert velocity back to Fourier space
       do k=0,NZP-1
       do i=0,NXM
         epsilon(j)=epsilon(j)+(S1(i,k,j)**2.0)
+        F1(i,k,j)=F1(i,k,j)+(S1(i,k,j)**2.0)
       end do
       end do
       end do
-! Compute du/dy at GYF gridpoints, note remove mean
+! Compute du/dy at GY gridpoints, note remove mean
       do j=1,NY
       do k=0,NZP-1
       do i=0,NXM
-         F1(i,k,j)=((U1(i,k,j)-dble(CR1(0,0,j)))
-     &          -(U1(i,k,j-1)-dble(CR1(0,0,j-1))))
+         S1(i,k,j)=((U1(i,k,j)-ume(j))
+     &          -(U1(i,k,j-1)-ume(j-1)))
      &             /DY(j)
       end do
       end do
@@ -1019,7 +1033,8 @@ C Convert velocity back to Fourier space
       do j=1,NY
       do k=0,NZP-1
       do i=0,NXM
-        epsilon(j)=epsilon(j)+(F1(i,k,j)**2.0)
+        epsilon(j)=epsilon(j)+(S1(i,k,j)**2.0)
+        F1(i,k,j)=F1(i,k,j)+(S1(i,k,j)**2.0)
       end do
       end do
       end do
@@ -1038,34 +1053,38 @@ C Convert velocity back to Fourier space
       do i=0,NXM
          epsilon(j)=epsilon(j)+(DYF(j-1)*S1(i,k,j)**2.d0
      &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
+         F1(i,k,j)=F1(i,k,j)+(DYF(j-1)*S1(i,k,j)**2.d0
+     &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
       end do
       end do
       end do
-! Compute du/dz at GYF gridpoints, note remove mean
+! Compute du/dz at GY gridpoints
 ! Store du/dz in CS1
       do j=1,NY
       do k=0,TNKZ
       do i=0,NXP-1
-        CF1(i,k,j)=CIKZ(k)*CR1(i,k,j)
+        CS1(i,k,j)=CIKZ(k)*CR1(i,k,j)
       end do
       end do
       end do
 ! Convert to physical space
-      call fft_xz_to_physical(CF1,F1,0,NY+1)
+      call fft_xz_to_physical(CS1,S1,0,NY+1)
       do j=1,NY
       do k=0,NZP-1
       do i=0,NXM
-         epsilon(j)=epsilon(j)+(DYF(j-1)*F1(i,k,j)**2.d0
-     &             +DYF(j)*F1(i,k,j-1)**2.d0)/(2.d0*DY(j))
+         epsilon(j)=epsilon(j)+(DYF(j-1)*S1(i,k,j)**2.d0
+     &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
+         F1(i,k,j)=F1(i,k,j)+(DYF(j-1)*S1(i,k,j)**2.d0
+     &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
       end do
       end do
       end do
-! Compute dv/dy at GYF gridpoints, note remove mean
+! Compute dv/dy at GY gridpoints, note remove mean
       do j=2,NYM
       do k=0,NZP-1
       do i=0,NXM
-       S1(i,k,j)=((U2(i,k,j+1)-dble(CR2(0,0,j+1)))
-     &        -(U2(i,k,j-1)-dble(CR2(0,0,j-1))))
+       S1(i,k,j)=((U2(i,k,j+1)-vme(j))
+     &        -(U2(i,k,j-1)-vme(j-1)))
      &            /(GY(j+1)-GY(j-1))
       end do
       end do
@@ -1074,15 +1093,16 @@ C Convert velocity back to Fourier space
       do k=0,NZP-1
       do i=0,NXM
         epsilon(j)=epsilon(j)+(S1(i,k,j)**2.0)
+        F1(i,k,j)=F1(i,k,j)+(S1(i,k,j)**2.0)
       end do
       end do
       end do
-! Compute dw/dy at GYF gridpoints, note remove mean
+! Compute dw/dy at GY gridpoints, note remove mean
       do j=1,NY
       do k=0,NZP-1
       do i=0,NXM
-         S1(i,k,j)=((U3(i,k,j)-dble(CR3(0,0,j)))
-     &          -(U3(i,k,j-1)-dble(CR3(0,0,j-1))))
+         S1(i,k,j)=((U3(i,k,j)-wme(j))
+     &          -(U3(i,k,j-1)-wme(j-1)))
      &             /DY(j)
       end do
       end do
@@ -1091,23 +1111,25 @@ C Convert velocity back to Fourier space
       do k=0,NZP-1
       do i=0,NXM
         epsilon(j)=epsilon(j)+(S1(i,k,j)**2.0)
+        F1(i,k,j)=F1(i,k,j)+(S1(i,k,j)**2.0)
       end do
       end do
       end do
-! Store dv/dz in CF1
+! Store dv/dz in CS1
       do j=1,NY
       do k=0,TNKZ
       do i=0,NXP-1
-         CF1(i,k,j)=CIKZ(k)*CR2(i,k,j)
+         CS1(i,k,j)=CIKZ(k)*CR2(i,k,j)
       end do
       end do
       end do
 ! Convert to physical space
-      call fft_xz_to_physical(CF1,F1,0,NY+1)
+      call fft_xz_to_physical(CS1,S1,0,NY+1)
       do j=1,NY
       do k=0,NZP-1
       do i=0,NXM
-        epsilon(j)=epsilon(j)+(F1(i,k,j)**2.0)
+        epsilon(j)=epsilon(j)+(S1(i,k,j)**2.0)
+        F1(i,k,j)=F1(i,k,j)+(S1(i,k,j)**2.0)
       end do
       end do
       end do
@@ -1126,12 +1148,15 @@ C Convert velocity back to Fourier space
       do i=0,NXM
          epsilon(j)=epsilon(j)+(DYF(j-1)*S1(i,k,j)**2.d0
      &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
+         F1(i,k,j)=F1(i,k,j)+(DYF(j-1)*S1(i,k,j)**2.d0
+     &             +DYF(j)*S1(i,k,j-1)**2.d0)/(2.d0*DY(j))
       end do
       end do
       end do
       do j=1,NY
         epsilon(j)=NU*epsilon(j)/dble(NX*NZ)
       end do
+      F1=NU*F1
       call mpi_allreduce(mpi_in_place,epsilon,NY+2,MPI_DOUBLE_PRECISION,
      &     MPI_SUM,MPI_COMM_Z,ierror)
 
@@ -1139,13 +1164,57 @@ C Convert velocity back to Fourier space
 #ifdef HDF5
       FNAME='tke.h5'
 
+      gname='time'
+      call WriteHDF5_real(FNAME,gname,TIME)
+
       IF (RANKZ.eq.0) THEN
-        epsilon(1)=0.d0
-        epsilon(NY)=0.d0      
+        gname='gyf'
+        Diag=gyf(1:NY)
+        call WriteStatH5(FNAME,gname,Diag)
+
         gname='epsilon' 
         Diag=epsilon(1:NY)
         call WriteStatH5(FNAME,gname,Diag)
       END IF
+
+      if (MOVIE) then
+         FNAME='movie.h5'
+         if (USE_MPI) then
+           call mpi_barrier(MPI_COMM_WORLD,ierror)
+         end if
+         IF (RANKZ.EQ.RANKZMOVIE) THEN
+            do I=0,NXM
+            do J=1,NY
+               varxy(i,j)=F1(i,NzMovie,j)
+            end do
+            end do
+            GNAME='epsilon_xy'
+            call writeHDF5_xyplane(FNAME,GNAME,varxy)
+         END IF
+         if (USE_MPI) then
+           call mpi_barrier(MPI_COMM_WORLD,ierror)
+         end if
+         IF (RANKY.EQ.RANKYMOVIE) THEN
+            do I=0,NXM
+            do J=0,NZP-1
+               varxz(i,j)=F1(i,j,NyMovie)
+            end do
+            end do
+            GNAME='epsilon_xz'
+            call writeHDF5_xzplane(FNAME,GNAME,varxz)
+         END IF
+         if (USE_MPI) then
+           call mpi_barrier(MPI_COMM_WORLD,ierror)
+         end if
+         do I=0,NZP-1
+         do J=1,NY
+            varzy(i,j)=F1(NxMovie,i,j)
+         end do
+         end do
+         GNAME='epsilon_zy'
+         call writeHDF5_zyplane(FNAME,GNAME,varzy)
+
+       END IF
 
 #else
 ! Here we aren't using HDF5, so write to a text file
