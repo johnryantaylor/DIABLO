@@ -57,9 +57,9 @@
       else
         DELTA_T=dt
       end if
-      H_BAR(1)=DELTA_T*(8.0/15.0)
-      H_BAR(2)=DELTA_T*(2.0/15.0)
-      H_BAR(3)=DELTA_T*(5.0/15.0)
+      H_BAR(1)=DELTA_T*(8.d0/15.d0)
+      H_BAR(2)=DELTA_T*(2.d0/15.d0)
+      H_BAR(3)=DELTA_T*(5.d0/15.d0)
 
       return
       end
