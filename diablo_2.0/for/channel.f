@@ -310,10 +310,77 @@ C In the process, Ui is converted to physical space
           CALL FFT_XZ_TO_FOURIER(U2,CU2,0,NY+1)
           CALL FFT_XZ_TO_FOURIER(U3,CU3,0,NY+1)
 
-          call les_chan_th
-C Re-apply the boundary conditions for the scalars
-C In the case of Neumann (applied stress) BCs, these were changed in the LES
-          call APPLY_BC_TH_PHYS_MPI
+C APPLY constant SGS Prandlt number
+         DO N=1,N_TH
+         do j=1,NY+1
+           do k=0,NZP-1
+             do i=0,NXM
+               KAPPA_T(I,K,J,N)=1.d0*NU_T(I,K,J)
+             end do
+           end do
+         end do
+         end do
+
+C Add the horizontal diffusive terms using explicit timestepping
+C This is already done for the viscous terms inside les_chan.f
+
+        DO N=1,N_TH
+
+        DO J=1,NY+1
+          DO K=0,TNKZ
+            DO I=0,NXP-1
+              CS1(I,K,J)=CIKX(I)*CTH(I,K,J,N)
+            END DO
+          END DO
+        END DO
+        CALL FFT_XZ_TO_PHYSICAL(CS1,S1,0,NY+1)
+         do j=1,NY+1
+           do k=0,NZP-1
+             do i=0,NXM
+               S1(I,K,J)=KAPPA_T(I,K,J,N)*S1(I,K,J)
+             end do
+           end do
+         end do
+         CALL FFT_XZ_TO_FOURIER(S1,CS1,0,NY+1)
+         DO J=JSTART_TH(N),JEND_TH(N)
+           DO K=0,TNKZ
+             DO I=0,NXP-1
+              CFTH(I,K,J,N)=CFTH(I,K,J,N)+CIKX(I)*CS1(I,K,J) 
+             END DO
+           END DO
+         END DO
+
+        DO J=1,NY+1
+          DO K=0,TNKZ
+            DO I=0,NXP-1
+              CS1(I,K,J)=CIKZ(K)*CTH(I,K,J,N)
+            END DO
+          END DO
+        END DO
+        CALL FFT_XZ_TO_PHYSICAL(CS1,S1,0,NY+1)
+         do j=1,NY+1
+           do k=0,NZP-1
+             do i=0,NXM
+               S1(I,K,J)=KAPPA_T(I,K,J,N)*S1(I,K,J)
+             end do
+           end do
+         end do
+         CALL FFT_XZ_TO_FOURIER(S1,CS1,0,NY+1)
+         DO J=JSTART_TH(N),JEND_TH(N)
+           DO K=0,TNKZ
+             DO I=0,NXP-1
+              CFTH(I,K,J,N)=CFTH(I,K,J,N)+CIKZ(K)*CS1(I,K,J)
+             END DO
+           END DO
+         END DO
+        END DO ! end do n
+ 
+! Now, convert TH to physical space for calculation of nonlinear terms
+        DO N=1,N_TH
+          CS1(:,:,:)=CTH(:,:,:,N)
+          CALL FFT_XZ_TO_PHYSICAL(CS1,S1,0,NY+1)
+          TH(:,:,:,N)=S1(:,:,:)
+        END DO
 
       ELSE
 C If the subgrid model hasn't been called, then it is necessary to
