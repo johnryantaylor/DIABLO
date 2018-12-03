@@ -8,7 +8,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       logical RESET_TIME
       INTEGER I, J, K, N
 
-      OPEN (11,file='input.dat',form='formatted',status='old')      
+      OPEN (11,file='input.dat',form='formatted',status='old')
 
 C Read input file.
 C   (Note - if you change the following section of code, update the
@@ -30,7 +30,7 @@ C    CURRENT_VERSION number to make obsolete previous input files!)
       READ(11,*)
       READ(11,*) NUM_PER_DIR, CREATE_NEW_FLOW
       READ(11,*)
-      READ(11,*) N_TIME_STEPS, TIME_LIMIT, DELTA_T, RESET_TIME, 
+      READ(11,*) N_TIME_STEPS, TIME_LIMIT, DELTA_T, RESET_TIME,
      &     VARIABLE_DT, CFL, UPDATE_DT
       READ(11,*)
       READ(11,*) VERBOSITY, SAVE_FLOW_INT, SAVE_STATS_INT, MOVIE
@@ -58,10 +58,10 @@ C Check compatibility
       IF ((USE_MPI).AND.(NUM_PER_DIR.eq.3)) THEN
         WRITE(6,*) 'ERROR: periodic.f isnt parallelized in MPI'
         pause
-      END IF 
+      END IF
 
       IF (RANK.EQ.0) THEN
-         WRITE(6,*) 
+         WRITE(6,*)
          WRITE(6,*) '             ****** WELCOME TO DIABLO ******'
          WRITE(6,*)
       END IF
@@ -76,7 +76,7 @@ C Initialize case-specific packages.
         CALL CREATE_GRID_CHAN
         IF (USE_MPI) THEN
           CALL INIT_CHAN_MPI
-        ELSE 
+        ELSE
           CALL INIT_CHAN
         END IF
         IF (MOVIE) THEN
@@ -87,7 +87,7 @@ C Initialize case-specific packages.
         CALL CREATE_GRID_DUCT
         CALL INIT_DUCT
       ELSEIF (NUM_PER_DIR.EQ.0) THEN
-        CALL INPUT_CAV 
+        CALL INPUT_CAV
         CALL CREATE_GRID_CAV
         CALL INIT_CAV
       END IF
@@ -113,31 +113,31 @@ C Initialize FFT package (includes defining the wavenumber vectors).
       CALL INIT_FFT
 
 C Initialize RKW3 parameters.
-      H_BAR(1)=DELTA_T*(8.0/15.0)
-      H_BAR(2)=DELTA_T*(2.0/15.0)
-      H_BAR(3)=DELTA_T*(5.0/15.0)
-      BETA_BAR(1)=1.0
-      BETA_BAR(2)=25.0/8.0
-      BETA_BAR(3)=9.0/4.0
-      ZETA_BAR(1)=0.0
-      ZETA_BAR(2)=-17.0/8.0
-      ZETA_BAR(3)=-5.0/4.0
+      H_BAR(1)=DELTA_T*(8.d0/15.d0)
+      H_BAR(2)=DELTA_T*(2.d0/15.d0)
+      H_BAR(3)=DELTA_T*(5.d0/15.d0)
+      BETA_BAR(1)=1.d0
+      BETA_BAR(2)=25.d0/8.d0
+      BETA_BAR(3)=9.d0/4.d0
+      ZETA_BAR(1)=0.d0
+      ZETA_BAR(2)=-17.d0/8.d0
+      ZETA_BAR(3)=-5.d0/4.d0
 
 C Initialize values for reading of scalars
       NUM_READ_TH=0
       DO N=1,N_TH
         IF (CREATE_NEW_TH(N)) THEN
-          NUM_READ_TH=NUM_READ_TH 
+          NUM_READ_TH=NUM_READ_TH
         ELSE
           NUM_READ_TH=NUM_READ_TH + 1
           READ_TH_INDEX(NUM_READ_TH)=N
         END IF
       END DO
       IF (NUM_PER_DIR.EQ.2) THEN
-        CALL CREATE_TH_CHAN 
+        CALL CREATE_TH_CHAN
       ELSE IF (NUM_PER_DIR.EQ.3) THEN
         CALL CREATE_TH_PER
-      END IF 
+      END IF
 
 C Create flow.
       IF (CREATE_NEW_FLOW) THEN
@@ -150,15 +150,15 @@ C Create flow.
         ELSEIF (NUM_PER_DIR.EQ.0) THEN
           CALL CREATE_FLOW_CAV
         END IF
-        IF (RANK.EQ.0) 
+        IF (RANK.EQ.0)
      &          write(*,*) 'A new flowfield has been created'
       ELSE
-        IF (RANK.EQ.0) 
+        IF (RANK.EQ.0)
      &        write(*,*) 'Reading flow...'
         CALL READ_FLOW
-        IF (RANK.EQ.0) 
+        IF (RANK.EQ.0)
      &       write(*,*) 'Done reading flow'
-        
+
         IF (USE_MPI) THEN
            CALL GHOST_CHAN_MPI
         END IF
@@ -185,13 +185,13 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       LOGICAL FINAL
 
       IF (NUM_PER_DIR.EQ.3) THEN
-        CALL SAVE_STATS_PER(FINAL)          
+        CALL SAVE_STATS_PER(FINAL)
       ELSEIF (NUM_PER_DIR.EQ.2) THEN
-        CALL SAVE_STATS_CHAN(FINAL)          
+        CALL SAVE_STATS_CHAN(FINAL)
       ELSEIF (NUM_PER_DIR.EQ.1) THEN
-        CALL SAVE_STATS_DUCT(FINAL)          
+        CALL SAVE_STATS_DUCT(FINAL)
       ELSEIF (NUM_PER_DIR.EQ.0) THEN
-        CALL SAVE_STATS_CAV(FINAL)          
+        CALL SAVE_STATS_CAV(FINAL)
       END IF
 
       RETURN
@@ -204,10 +204,10 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       CHARACTER*55 FNAME
       CHARACTER*55 FNAME_TH(N_TH)
       INTEGER I, J, K, N, NUM_PER_DIR_T
-      
+
       FNAME='diablo.start'
       FNAME='start.h5'
-      IF (RANK.EQ.0) 
+      IF (RANK.EQ.0)
      &     WRITE(6,*)   'Reading flow from ',FNAME
       if (FNAME(len_trim(FNAME)-2:len_trim(FNAME)).eq.".h5") then
          IF (NUM_PER_DIR.NE.2) THEN
@@ -215,17 +215,17 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
             WRITE(6,*) ' READING TO HDF5 NOT IMPLEMENTED '
             WRITE(6,*) ' FOR NUM_PER_DIR DIFFERENT FROM 2'
             END IF
-            STOP 
+            STOP
          END IF
 #ifdef HDF5
          call mpi_barrier(MPI_COMM_WORLD,ierror)
          call ReadHDF5(FNAME)
 #else
-         IF (RANK.EQ.0) then     
+         IF (RANK.EQ.0) then
          write(*,*) ' **** ERROR ******************************'
          write(*,*) ' Program not compiled with HDF5 libraries.'
          end if
-         stop 
+         stop
 #endif
       else
 
@@ -239,7 +239,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
          READ (10) NX_T, NY_T, NZ_T, NUM_PER_DIR_T, TIME, TIME_STEP
 
 
-         IF (RANK.EQ.0) 
+         IF (RANK.EQ.0)
      &        write(*,*) 'NX_T, NY_T, NZ_T: ',NX_T,NY_T,NZ_T
 
         IF ((NX .NE. NX_T) .OR. (NY .NE. NY_T) .OR. (NZ .NE. NZ_T))
@@ -247,7 +247,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
         IF (NUM_PER_DIR .NE. NUM_PER_DIR_T)
      *     STOP 'Error: old flowfield wrong NUM_PER_DIR. '
 
-         IF (RANK.EQ.0) 
+         IF (RANK.EQ.0)
      &        write(*,*) 'READING FLOW'
          IF (NUM_PER_DIR.EQ.3) THEN
 
@@ -273,7 +273,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
 !     Specify in input.dat which scalars are to be read
                OPEN(UNIT=11,FILE=FNAME_TH(READ_TH_INDEX(N)),STATUS="OLD"
      &              ,FORM="UNFORMATTED")
-               READ (11) NX_T, NY_T, NZ_T, NUM_PER_DIR_T, 
+               READ (11) NX_T, NY_T, NZ_T, NUM_PER_DIR_T,
      *              TIME, TIME_STEP
                READ (11) (((CTH(I,K,J,READ_TH_INDEX(N))
      &              ,I=0,NKX),K=0,TNKZ),J=1,NY)
@@ -313,7 +313,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       LOGICAL      FINAL,FLAGE,SAVE_PRESSURE
 
       SAVE_PRESSURE=.FALSE.
-      if (FINAL) then 
+      if (FINAL) then
          FNAME='end.h5'
          SAVE_PRESSURE=.TRUE.
       else
@@ -325,17 +325,17 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
             WRITE(6,*) ' SAVING TO HDF5 NOT IMPLEMENTED '
             WRITE(6,*) ' FOR NUM_PER_DIR DIFFERENT FROM 2'
             END IF
-            STOP 
+            STOP
          END IF
 #ifdef HDF5
          call mpi_barrier(MPI_COMM_WORLD,ierror)
-         call WriteHDF5(FNAME,SAVE_PRESSURE)      
+         call WriteHDF5(FNAME,SAVE_PRESSURE)
 #else
-         IF (RANK.EQ.0) then      
+         IF (RANK.EQ.0) then
          write(*,*) ' **** ERROR ******************************'
          write(*,*) ' Program not compiled with HDF5 libraries.'
          end if
-         stop 
+         stop
 #endif
       else
          IF (FINAL) THEN
@@ -364,7 +364,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
 
             END DO
          END IF
-         IF (RANK.EQ.0) 
+         IF (RANK.EQ.0)
      &        WRITE(6,*) 'Writing flow to ',FNAME
 
          OPEN(UNIT=10,FILE=FNAME,STATUS="UNKNOWN",FORM="UNFORMATTED")
@@ -408,31 +408,31 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       RETURN
       END
 
-      
+
       SUBROUTINE END_RUN(FLAG)
-      
+
       INCLUDE 'header'
-      
+
       LOGICAL FLAG,FILE_EXISTS
 
       FLAG=.FALSE.
       ! Check for the time
       call WALL_TIME(END_TIME)
       if (END_TIME-START_TIME.gt.TIME_LIMIT) THEN
-         IF (RANK.EQ.0) 
+         IF (RANK.EQ.0)
      &        write(*,*) ' STOP because of wall-time hit!'
          FLAG=.TRUE.
       END IF
-      
+
       INQUIRE(FILE="stop.now", EXIST=FILE_EXISTS)
       IF ( FILE_EXISTS ) THEN
-         IF (RANK.EQ.0) 
+         IF (RANK.EQ.0)
      &        write(*,*) ' STOP because of stop.now file!'
          FLAG=.TRUE.
       END IF
-      
+
       RETURN
-      END 
+      END
 
 
 
@@ -495,7 +495,7 @@ c
       wt = (val(1)-2016)*365*86400+
      &     day*86400+val(5)*3600+val(6)*60+val(7)+dble(val(8)/1000.d0)
 
-      end 
+      end
 
 
 
