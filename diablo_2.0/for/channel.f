@@ -306,10 +306,6 @@ C spinup before applying the subgrid model for stability purposes
 C In the process, Ui is converted to physical space
           call les_chan
 
-          CALL FFT_XZ_TO_FOURIER(U1,CU1,0,NY+1)
-          CALL FFT_XZ_TO_FOURIER(U2,CU2,0,NY+1)
-          CALL FFT_XZ_TO_FOURIER(U3,CU3,0,NY+1)
-
 C APPLY constant SGS Prandlt number
          DO N=1,N_TH
          do j=1,NY+1
