@@ -33,7 +33,8 @@ C    CURRENT_VERSION number to make obsolete previous input files!)
       READ(11,*) N_TIME_STEPS, TIME_LIMIT, DELTA_T, RESET_TIME,
      &     VARIABLE_DT, CFL, UPDATE_DT
       READ(11,*)
-      READ(11,*) VERBOSITY, SAVE_FLOW_INT, SAVE_STATS_INT, MOVIE
+      READ(11,*) VERBOSITY, SAVE_FLOW_INT, SAVE_STATS_INT, MOVIE,
+     &     SAVE_STATS_TIME, SAVE_FLOW_TIME
       READ(11,*)
 ! Read in the parameters for the N_TH scalars
       DO N=1,N_TH
