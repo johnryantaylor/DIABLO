@@ -88,14 +88,9 @@ C A flag to determine if we are considering the first time-step
            CALL SAVE_STATS(.FALSE.)
            SAVESTAT=.FALSE.
         END IF
-<<<<<<< HEAD
         IF (SAVE_STATS_INT.LT.0) THEN
           IF((MOD(TIME,REAL(ABS(SAVE_STATS_INT)))+DELTA_T)
      &          .GT.REAL(ABS(SAVE_STATS_INT)))THEN
-=======
-        IF (SAVE_STATS_TIME.GT.0.d0) THEN
-          IF((MOD(TIME,SAVE_STATS_TIME)+DELTA_T).GT.SAVE_STATS_TIME)THEN
->>>>>>> 5b73e213e8aedffca3192a0ba325baed5ff295b1
              SAVESTAT=.TRUE.
           END IF
         ELSE
@@ -108,14 +103,9 @@ C A flag to determine if we are considering the first time-step
            CALL SAVE_FLOW(.FALSE.)
            SAVEFLOW=.FALSE.
         END IF
-<<<<<<< HEAD
         IF (SAVE_FLOW_INT.LT.0) THEN
            IF((MOD(TIME,REAL(ABS(SAVE_FLOW_INT)))+DELTA_T)
      &          .GT.REAL(ABS(SAVE_FLOW_INT)))THEN
-=======
-        IF (SAVE_FLOW_TIME.GT.0.d0) THEN
-           IF((MOD(TIME,SAVE_FLOW_TIME)+DELTA_T).GT.SAVE_FLOW_TIME)THEN
->>>>>>> 5b73e213e8aedffca3192a0ba325baed5ff295b1
               SAVEFLOW=.TRUE.
            END IF
         ELSE
