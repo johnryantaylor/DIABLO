@@ -54,7 +54,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       PROGRAM DIABLO
       INCLUDE 'header'
       INTEGER N
-      LOGICAL FLAG
+      LOGICAL FLAG,SAVESTAT,SAVEFLOW
 
       CALL INITIALIZE
 ! Initialize START_TIME for run timing
@@ -82,17 +82,40 @@ C A flag to determine if we are considering the first time-step
             IF (TIME_AD_METH.EQ.2) CALL RK_CAV_2            
           END IF
         END DO
-        TIME=TIME+DELTA_T
-        FIRST_TIME=.FALSE.
 
 ! Save statistics to an output file
-        IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
-            CALL SAVE_STATS(.FALSE.)
+        IF (SAVESTAT.EQ..TRUE.)THEN
+           CALL SAVE_STATS(.FALSE.)
+           SAVESTAT=.FALSE.
+        END IF
+        IF (SAVE_STATS_INT.LT.0) THEN
+          IF((MOD(TIME,REAL(ABS(SAVE_STATS_INT)))+DELTA_T)
+     &          .GT.REAL(ABS(SAVE_STATS_INT)))THEN
+             SAVESTAT=.TRUE.
+          END IF
+        ELSE
+           IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
+              CALL SAVE_STATS(.FALSE.)
+           END IF
         END IF
 ! Save the flow to a restart file
-        IF (MOD(TIME_STEP,SAVE_FLOW_INT).EQ.0) THEN
-          CALL SAVE_FLOW(.FALSE.)
+        IF (SAVEFLOW.EQ..TRUE.)THEN
+           CALL SAVE_FLOW(.FALSE.)
+           SAVEFLOW=.FALSE.
         END IF
+        IF (SAVE_FLOW_INT.LT.0) THEN
+           IF((MOD(TIME,REAL(ABS(SAVE_FLOW_INT)))+DELTA_T)
+     &          .GT.REAL(ABS(SAVE_FLOW_INT)))THEN
+              SAVEFLOW=.TRUE.
+           END IF
+        ELSE
+           IF (MOD(TIME_STEP,SAVE_FLOW_INT).EQ.0) THEN
+              CALL SAVE_FLOW(.FALSE.)
+           END IF
+        END IF
+
+        TIME=TIME+DELTA_T
+        FIRST_TIME=.FALSE.
 
         IF (USE_MPI) THEN
            CALL END_RUN_MPI(FLAG)
