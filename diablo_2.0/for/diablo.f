@@ -54,7 +54,7 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       PROGRAM DIABLO
       INCLUDE 'header'
       INTEGER N
-      LOGICAL FLAG,SAVESTAT,SAVEFLOW
+      LOGICAL FLAG
 
       CALL INITIALIZE
 ! Initialize START_TIME for run timing
@@ -84,14 +84,10 @@ C A flag to determine if we are considering the first time-step
         END DO
 
 ! Save statistics to an output file
-        IF (SAVESTAT.EQ..TRUE.)THEN
-           CALL SAVE_STATS(.FALSE.)
-           SAVESTAT=.FALSE.
-        END IF
         IF (SAVE_STATS_INT.LT.0) THEN
           IF((MOD(TIME,REAL(ABS(SAVE_STATS_INT)))+DELTA_T)
-     &          .GT.REAL(ABS(SAVE_STATS_INT)))THEN
-             SAVESTAT=.TRUE.
+     &          .GT.REAL(ABS(SAVE_STATS_INT))) THEN
+             CALL SAVE_STATS(.FALSE.)
           END IF
         ELSE
            IF (MOD(TIME_STEP,SAVE_STATS_INT).EQ.0) THEN
@@ -99,14 +95,10 @@ C A flag to determine if we are considering the first time-step
            END IF
         END IF
 ! Save the flow to a restart file
-        IF (SAVEFLOW.EQ..TRUE.)THEN
-           CALL SAVE_FLOW(.FALSE.)
-           SAVEFLOW=.FALSE.
-        END IF
         IF (SAVE_FLOW_INT.LT.0) THEN
            IF((MOD(TIME,REAL(ABS(SAVE_FLOW_INT)))+DELTA_T)
-     &          .GT.REAL(ABS(SAVE_FLOW_INT)))THEN
-              SAVEFLOW=.TRUE.
+     &          .GT.REAL(ABS(SAVE_FLOW_INT))) THEN
+              CALL SAVE_FLOW(.FALSE.)
            END IF
         ELSE
            IF (MOD(TIME_STEP,SAVE_FLOW_INT).EQ.0) THEN
