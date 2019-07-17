@@ -10,16 +10,16 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       LOGICAL FINAL
       integer i,j,k,n
       real*8 uc, ubulk
-    
+
 ! This variable is used to add up scalar diagnostics
       real*8 thsum(0:NY+1)
-! These variables are used to store and write 2D slices 
+! These variables are used to store and write 2D slices
       real*8 varxy(0:NXM,1:NY),varzy(0:NZP-1,1:NY),varxz(0:NXM,0:NZP-1)
 
 ! These variable are used for HDF5 writing
       real*8 Diag(1:NY)
 
-      IF (RANK.EQ.0) 
+      IF (RANK.EQ.0)
      &     WRITE(6,*) 'Saving flow statistics.'
 
       IF (USE_MPI) THEN
@@ -94,12 +94,12 @@ C Apply Boundary conditions to velocity field
       IF (NPROCY.EQ.1) THEN
       if (int(float(NY)/2.) .eq. float(NY)/2.) then
 ! IF NY is even
-        uc=dble(CU1(0,0,int(float(NY)/2.))) 
+        uc=dble(CU1(0,0,int(float(NY)/2.)))
       else
         uc=0.5*(dble(CU1(0,0,int(float(NY)/2.)-1))
      +         +dble(CU1(0,0,int(float(NY)/2.))))
       end if
-      write(*,*) 'Centerline velocity = ', uc 
+      write(*,*) 'Centerline velocity = ', uc
 ! Compute and write out bulk velocity
       END IF
 
@@ -146,7 +146,7 @@ C Apply Boundary conditions to velocity field
       IF (RANKZ.EQ.0) THEN
          ume=dble(CU1(0,0,:))
          vme=dble(CU2(0,0,:))
-         wme=dble(CU3(0,0,:)) 
+         wme=dble(CU3(0,0,:))
          DO n=1,N_TH
             thme(:,n)=dble(CTH(0,0,:,n))
          END DO
@@ -169,13 +169,13 @@ C Apply Boundary conditions to velocity field
       call tkebudget_chan
       IF (LES) call tkebudget_chan_les
 
-! Get the turbulent kinetic energy at each level 
+! Get the turbulent kinetic energy at each level
       do j=1,NY
         urms(j)=0.
         vrms(j)=0.
         wrms(j)=0.
       do k=0,NZP-1
-      do i=0,NXM 
+      do i=0,NXM
         urms(j)=urms(j)+(U1(i,k,j)-ume(j))**2.
         vrms(j)=vrms(j)+0.5*((U2(i,k,j  )-vme(j  ))**2. +
      &                       (U2(i,k,j+1)-vme(j+1))**2. )
@@ -195,7 +195,7 @@ C Apply Boundary conditions to velocity field
         urms(j)=sqrt(urms(j)/(float(NZ)*float(NX)))
         vrms(j)=sqrt(vrms(j)/(float(NZ)*float(NX)))
         wrms(j)=sqrt(wrms(j)/(float(NZ)*float(NX)))
-      end do 
+      end do
 
       ! Get the bulk rms value
       CALL INTEGRATE_Y_VAR(urms,urms_b,MPI_COMM_Y)
@@ -206,7 +206,7 @@ C Apply Boundary conditions to velocity field
 ! Here, uv and wv are defined on the GY grid
 ! uv is defined on the GYF grid
       do j=1,NY
-        uv(j)=0. 
+        uv(j)=0.
         uw(j)=0.
         wv(j)=0.
       do k=0,NZP-1
@@ -231,13 +231,13 @@ C Apply Boundary conditions to velocity field
      &     MPI_SUM,MPI_COMM_Z,ierror)
       call mpi_allreduce(mpi_in_place,wv,NY+2,MPI_DOUBLE_PRECISION,
      &     MPI_SUM,MPI_COMM_Z,ierror)
-      
+
       do j=1,NY
         uv(j)=uv(j)/(float(NZ)*float(NX))
         uw(j)=uw(j)/(float(NZ)*float(NX))
         wv(j)=wv(j)/(float(NZ)*float(NX))
       end do
-              
+
 ! Get the y-derivative of the mean velocity at GY points
       do j=1,NY
         dudy(j)=(ume(j)-ume(j-1))/(GYF(j)-GYF(j-1))
@@ -355,13 +355,13 @@ C Apply Boundary conditions to velocity field
       IF (RANKZ.eq.0) then
 
       gname='gyf'
-      Diag=gyf(1:NY)      
+      Diag=gyf(1:NY)
       call WriteStatH5(FNAME,gname,Diag)
 
       gname='ume'
       Diag=ume(1:NY)
       call WriteStatH5(FNAME,gname,Diag)
-    
+
       gname='vme'
       Diag=vme(1:NY)
       call WriteStatH5(FNAME,gname,Diag)
@@ -535,7 +535,7 @@ C Apply Boundary conditions to velocity field
         pe_diss(j,n)=thsum(j)/dble(NX*NZ)
       end do
 
-#ifdef HDF5 
+#ifdef HDF5
       if (MOVIE) then
          FNAME='movie.h5'
       if (n.eq.1) then
@@ -623,13 +623,13 @@ C Apply Boundary conditions to velocity field
 
 
 #ifdef HDF5
- 
-      FNAME='mean.h5' 
-  
+
+      FNAME='mean.h5'
+
       IF (RANKZ.eq.0) THEN
- 
+
       do n=1,N_TH
- 
+
         Diag=thme(1:NY,n)
         gname='thme'
      &           //CHAR(MOD(N,100)/10+48)
@@ -659,7 +659,7 @@ C Apply Boundary conditions to velocity field
      &           //CHAR(MOD(N,100)/10+48)
      &           //CHAR(MOD(N,10)+48)
         call WriteStatH5(FNAME,gname,Diag)
- 
+
       end do
 
       END IF
@@ -676,7 +676,7 @@ C Apply Boundary conditions to velocity field
       open(41,file=FNAME,form='formatted',status='unknown')
       write(41,*) TIME_STEP,TIME,DELTA_T
       write(41,*) UBULK
-      do n=1,N_TH 
+      do n=1,N_TH
       do j=1,NY
         write(41,402) j,GYF(J),thme(j,n)
      +      ,dthdy(j,n),thrms(j,n),thv(j,n),pe_diss(j,n)
@@ -686,10 +686,10 @@ C Apply Boundary conditions to velocity field
 402   format(I3,' ',6(F30.20,' '))
 #endif
 
-      IF (RANK.EQ.0) 
+      IF (RANK.EQ.0)
      &     write(*,*) 'VERBOSITY: ',VERBOSITY
-      if (VERBOSITY.gt.4) then 
-      IF (RANK.EQ.0) 
+      if (VERBOSITY.gt.4) then
+      IF (RANK.EQ.0)
      &        write(*,*) 'Outputting info for gnuplot...'
       open (unit=10, file="solution")
       do i=2,NXM
@@ -699,7 +699,7 @@ C Apply Boundary conditions to velocity field
         write (10,*) ""
       end do
       close (10)
-      call system ('gnuplot <gnuplot.in') 
+      call system ('gnuplot <gnuplot.in')
       end if
 
 #ifdef HDF5
@@ -783,7 +783,7 @@ C Apply Boundary conditions to velocity field
             end do
             GNAME='v_xz'
             call writeHDF5_xzplane(FNAME,GNAME,varxz)
-         END IF 
+         END IF
 
          if (USE_MPI) then
          call mpi_barrier(MPI_COMM_WORLD,ierror)
@@ -809,10 +809,10 @@ C Apply Boundary conditions to velocity field
             end do
             end do
             GNAME='nu_t_xz'
-            call writeHDF5_xzplane(FNAME,GNAME,varxz) 
+            call writeHDF5_xzplane(FNAME,GNAME,varxz)
          end if
          END IF
-         
+
          if (USE_MPI) then
          call mpi_barrier(MPI_COMM_WORLD,ierror)
          end if
@@ -874,8 +874,8 @@ C Convert velocity back to Fourier space
 ! END IF FINAL
       end if
 
-      IF (RANK.EQ.0) 
-     &     write(*,*) 'done save_stats chan' 
+      IF (RANK.EQ.0)
+     &     write(*,*) 'done save_stats chan'
 
       if (USE_MPI) then
       call mpi_barrier(MPI_COMM_WORLD,ierror)
@@ -885,7 +885,7 @@ C Convert velocity back to Fourier space
       END
 
       subroutine tkebudget_chan_les
-! Calculate the componet of th SGS dissipation rate 
+! Calculate the componet of th SGS dissipation rate
 ! only includes the terms timestepped implicitly
       include 'header'
       include 'header_les'
@@ -917,7 +917,7 @@ C Convert velocity back to Fourier space
           END DO
         END DO
       END DO
- 
+
 ! Now calculate the horizontal average
         do j=1,NY
           epsilon_sgs(j)=0.d0
@@ -930,7 +930,7 @@ C Convert velocity back to Fourier space
 
       call mpi_allreduce(mpi_in_place,epsilon_sgs,NY+2
      &    ,MPI_DOUBLE_PRECISION,
-     &     MPI_SUM,MPI_COMM_Z,ierror)        
+     &     MPI_SUM,MPI_COMM_Z,ierror)
 
 
 #ifdef HDF5
@@ -1083,7 +1083,7 @@ C Convert velocity back to Fourier space
       do j=2,NYM
       do k=0,NZP-1
       do i=0,NXM
-       S1(i,k,j)=((U2(i,k,j+1)-vme(j))
+       S1(i,k,j)=((U2(i,k,j+1)-vme(j+1))
      &        -(U2(i,k,j-1)-vme(j-1)))
      &            /(GY(j+1)-GY(j-1))
       end do
@@ -1172,7 +1172,7 @@ C Convert velocity back to Fourier space
         Diag=gyf(1:NY)
         call WriteStatH5(FNAME,gname,Diag)
 
-        gname='epsilon' 
+        gname='epsilon'
         Diag=epsilon(1:NY)
         call WriteStatH5(FNAME,gname,Diag)
       END IF
@@ -1234,8 +1234,5 @@ C Convert velocity back to Fourier space
       end if
 #endif
 
-      return 
+      return
       end
-
-
-
