@@ -341,7 +341,7 @@ C This is already done for the viscous terms inside les_chan.f
          DO J=JSTART_TH(N),JEND_TH(N)
            DO K=0,TNKZ
              DO I=0,NXP-1
-              CFTH(I,K,J,N)=CFTH(I,K,J,N)+CIKX(I)*CS1(I,K,J) 
+              CFTH(I,K,J,N)=CFTH(I,K,J,N)+CIKX(I)*CS1(I,K,J)
              END DO
            END DO
          END DO
@@ -370,7 +370,7 @@ C This is already done for the viscous terms inside les_chan.f
            END DO
          END DO
         END DO ! end do n
- 
+
 ! Now, convert TH to physical space for calculation of nonlinear terms
         DO N=1,N_TH
           CS1(:,:,:)=CTH(:,:,:,N)
@@ -1647,7 +1647,25 @@ C Define grid spacing
          DO J=1,NY
            DYF(J)=(GY(J+1)-GY(J))
          END DO
-         DYF(NY+1)=DYF(NY)
+         !DYF(NY+1)=DYF(NY)
+
+         ! Communicate  dyf(0)  and  dyf(Ny + 1), rather than extrapolating
+         if (rankY == 0) then
+           dyf(0) = dyf(1)
+         else
+           call mpi_send(dyf(2), 1, mpi_double_precision, rankY - 1,
+     &          100 + rankY, mpi_comm_y, ierror)
+           call mpi_recv(dyf(0), 1, mpi_double_precision, rankY - 1,
+     &          110 + rankY - 1, mpi_comm_y, status, ierror)
+         end if
+         if (rankY == NprocY - 1) then
+           dyf(Ny + 1) = dyf(Ny)
+         else
+           call mpi_send(dyf(Ny - 1), 1, mpi_double_precision, rankY + 1,
+     &          110 + rankY, mpi_comm_y, ierror)
+           call mpi_recv(dyf(Ny + 1), 1, mpi_double_precision, rankY + 1,
+     &          100 + rankY + 1, mpi_comm_y, status, ierror)
+         end if
 
          RETURN
          END

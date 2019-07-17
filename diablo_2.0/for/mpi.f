@@ -101,7 +101,7 @@
           END DO
         END DO
       END IF
-      
+
 ! AT this point we have passed data up the chain
       IF (RANKY.eq.NPROCY-1) THEN
 ! If we are the higest ranked process, then we don't need to recieve
@@ -264,7 +264,7 @@
           END DO
         END DO
       END IF
-      
+
 ! Now, we have hit the top process.  Set the BCs and pass data down
 
       IF (RANKY.eq.NPROCY-1) THEN
@@ -458,6 +458,105 @@
 
       RETURN
       END
+
+
+      subroutine ghost_CSij2_mpi
+
+! This subroutine is part of the MPI package for the LES subroutine
+! to compute the strain
+! Share down the CSij2 Ny + 1 ghost cell between neighboring processors
+! CSij2(Ny+1) is needed to compute temp at Ny
+
+      include 'header'
+      include 'header_les'
+
+      integer i, j, k, n
+
+      ! Define the arrays that will be used for data packing.  This makes the
+      ! communication between processes more efficient by only requiring one
+      ! send and recieve.
+      ! The communication will be done in Fourier space, so these arrays should
+      ! be complex arrays to match the velocity
+      ! The size of the buffer array is 0:Nxp-1,0:NZP-1
+      COMPLEX*16 ocpack(0:Nxp-1, 0:Nzp - 1)
+      COMPLEX*16 icpack(0:Nxp-1, 0:Nzp - 1)
+
+      ! If we are using more than one processor, then we need to pass data
+
+      if (NprocY > 1) then
+
+        ! Set the BCs and pass data down
+
+        if (rankY == NprocY - 1) then
+          ! If we are the higest ranked process, then we don't need to recieve
+          ! data at the upper ghost cells.
+
+          ! We don't need CSij2 at the boundaries (dictates CSij4' & 6' only)
+          do k = 0, tNkz
+            do i = 0, Nxp - 1
+              CSij2(i, k, Ny + 1) = -10000.d0
+            end do
+          end do
+
+          ! Now, send data down the chain
+          do k = 0, tNkz
+            do i = 0, Nxp - 1
+              ocpack(i, k) = CSij2(i, k, 2)
+            end do
+          end do
+          ! Now, we have packed the data into a compact array, pass the data up
+          call mpi_send(ocpack, (Nxp) * (Nzp)
+     &          , mpi_double_complex
+     &          , rankY - 1, 3, mpi_comm_y, ierror)
+        else if (rankY > 0) then
+          ! Here, we are one of the middle processes and we need to pass data
+          ! down and recieve data from above us
+          do k = 0, tNkz
+            do i = 0, Nxp - 1
+              ocpack(i, k) = CSij2(i, k, 2)
+            end do
+          end do
+
+          call mpi_send(ocpack, (Nxp) * (Nzp)
+     &          , mpi_double_complex
+     &          , rankY - 1, 3, mpi_comm_y, ierror)
+
+          call mpi_recv(icpack, (Nxp) * (Nzp)
+     &          , mpi_double_complex
+     &          , rankY + 1, 3, mpi_comm_y, status, ierror)
+          ! Now, unpack the data that we have recieved
+          do k = 0, tNkz
+            do i = 0, Nxp - 1
+              CSij2(i, k, Ny + 1) = icpack(i, k)
+            end do
+          end do
+        else
+          ! Here, we must be the lowest process (RANK=0) and we need to receive
+          ! data from above
+          call mpi_recv(icpack, (Nxp) * (Nzp)
+     &          , mpi_double_complex
+     &          , rankY + 1, 3, mpi_comm_y, status, ierror)
+          ! Unpack the data that we have recieved
+          do k = 0, tNkz
+            do i = 0, Nxp - 1
+              CSij2(i, k, Ny + 1) = icpack(i, k)
+            end do
+          end do
+        end if
+
+      else
+        ! Here, NprocY=1, so we just need to set the boundary values
+        ! Set CSij2 (cu2(i, k, Ny + 2) - cu2(i, k, Ny + 1)) / dyf(Ny + 1)
+        do k = 0, tNkz
+          do i = 0, Nxp - 1
+            CSij2(i, k, Ny + 1) = -10000.d0
+          end do
+        end do
+
+      end if
+
+      return
+      end
 
 C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       SUBROUTINE THOMAS_FORWARD_REAL_MPI(A,B,C,G,INY,INX)
@@ -683,13 +782,13 @@ C Else, if we are the highest process, then compute the solution at j=INY
       SUBROUTINE INIT_MPI
 C----*|--.---------.---------.---------.---------.---------.---------.-|-----|
       INCLUDE 'header'
- 
+
       INTEGER bl(2),disp(2),types(2)
 
       INTEGER IPROCS,TYPE1,COMM_CART
       INTEGER DIMS(2),PERDIM(2)
       INTEGER MFLAG(2)
-      
+
       INTEGER I,J,K,XI,ZI
 
       COMPLEX*16 TMP(0:NX/2,0:NZP+1,0:NY+1)
@@ -720,14 +819,14 @@ c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
          IF (RANK.EQ.0) WRITE(*,*) 'ERROR: compiled with ',NPROCS,
      &        'cores, running with ',IPROCS,' cores.'
          CALL MPI_FINALIZE(ierror)
-         stop 
+         stop
       END IF
 
       IF (MOD(NPROCS,NPROCY).NE.0) THEN
          IF (RANK.EQ.0) WRITE(*,*) ' Error. NPROCS is not a ',
      &        'multiple of NPROCY'
          CALL MPI_FINALIZE(ierror)
-         stop 
+         stop
       END IF
 
       DIMS(2)=NPROCY
@@ -738,7 +837,7 @@ c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
 
       call MPI_CART_CREATE(MPI_COMM_WORLD,2,DIMS,PERDIM,.FALSE.,
      &     COMM_CART,IERROR)
-      ! In PERDIM I put the information for the remain_dims 
+      ! In PERDIM I put the information for the remain_dims
       PERDIM=(/0,1/)
       call MPI_CART_SUB(COMM_CART,PERDIM,MPI_COMM_Y,IERROR)
       PERDIM=(/1,0/)
@@ -751,7 +850,7 @@ c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
      &     NPROCS
       call MPI_BARRIER(MPI_COMM_WORLD,IERROR)
       write(*,'(1A,4I8)') 'RANK,RANKY,RANKZ: ',RANK,RANKY,RANKZ
-      
+
       !call fftw_mpi_init()
       !alloc_local=fftw_mpi_local_size_2d(NZ,NX, MPI_COMM_Z,
       !&     NZP,iNZ)
@@ -759,12 +858,12 @@ c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
 
       !NZP=NZ/NPROCSZ
       !NXP=NX/(2*NPROCSZ)
-      
+
 C$$$      PI=4.*atan(1.0)
 C$$$      do i=0,NX-1
 C$$$         do j=1,1
 C$$$            do k=0,NZP-1
-C$$$               xi= i    
+C$$$               xi= i
 C$$$               zi= k+NZP*RANKZ
 C$$$               V(i,k,j)=sin(2*PI/NX*xi+2*2*PI/NZ*zi)
 C$$$            end do
@@ -774,12 +873,12 @@ C$$$      end do
 c$$$c     ------------------------------
 c$$$c     Define FFT
 c$$$c     ------------------------------
-c$$$      CALL RFFTWND_F77_CREATE_PLAN(FFTW_X_TO_F_PLAN, 1, NX,                                 
-c$$$     *        FFTW_FORWARD,  FFTW_MEASURE  ) 
+c$$$      CALL RFFTWND_F77_CREATE_PLAN(FFTW_X_TO_F_PLAN, 1, NX,
+c$$$     *        FFTW_FORWARD,  FFTW_MEASURE  )
 c$$$      CALL  FFTWND_F77_CREATE_PLAN(FFTW_Z_TO_F_PLAN, 1, NZ,
 c$$$     *        FFTW_FORWARD,  FFTW_MEASURE + FFTW_IN_PLACE )
-c$$$      CALL RFFTWND_F77_CREATE_PLAN(FFTW_X_TO_P_PLAN, 1, NX,                                 
-c$$$     *        FFTW_BACKWARD,  FFTW_MEASURE  ) 
+c$$$      CALL RFFTWND_F77_CREATE_PLAN(FFTW_X_TO_P_PLAN, 1, NX,
+c$$$     *        FFTW_BACKWARD,  FFTW_MEASURE  )
 c$$$      CALL  FFTWND_F77_CREATE_PLAN(FFTW_Z_TO_P_PLAN, 1, NZ,
 c$$$     *        FFTW_BACKWARD,  FFTW_MEASURE + FFTW_IN_PLACE )
 
@@ -790,11 +889,11 @@ c     ------------------------------
 
       ! Box full x to z (1)
       call MPI_TYPE_VECTOR(NZP,NXP,NX/2+1,
-     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror) 
-      call MPI_TYPE_COMMIT(TYPE1,ierror)                                              
+     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror)
+      call MPI_TYPE_COMMIT(TYPE1,ierror)
 
       bl(1:2)=(/1, 1/)
-      disp(1:2)= (/0, NXP*16/)  
+      disp(1:2)= (/0, NXP*16/)
       types=(/TYPE1, MPI_UB/)
 
       call MPI_TYPE_STRUCT(2,bl,disp,types,XY2ZY_1,ierror)
@@ -803,11 +902,11 @@ c     ------------------------------
 
       ! Box full x to z (2)
       call MPI_TYPE_VECTOR(NZP,NXP,NXP+1,
-     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror) 
-      call MPI_TYPE_COMMIT(TYPE1,ierror)                                              
+     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror)
+      call MPI_TYPE_COMMIT(TYPE1,ierror)
 
       bl(1:2)=(/1, 1/)
-      disp(1:2)= (/0, NZP*(NXP+1)*16/)  
+      disp(1:2)= (/0, NZP*(NXP+1)*16/)
       types=(/TYPE1, MPI_UB/)
 
       call MPI_TYPE_STRUCT(2,bl,disp,types,XY2ZY_2,ierror)
@@ -819,29 +918,29 @@ c     OTHER POSSIBLE TRANSPOSES!!!!
 c     ///////////////////////////////////
 c$$$      ! Box full x to z (2)
 c$$$      call MPI_TYPE_VECTOR(NXP,1,NZ,
-c$$$     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror) 
-c$$$      call MPI_TYPE_COMMIT(TYPE1,ierror)                                              
+c$$$     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror)
+c$$$      call MPI_TYPE_COMMIT(TYPE1,ierror)
 c$$$
 c$$$      bl(1:2)=(/1, 1/)
-c$$$      disp(1:2)= (/0, 16/)  
+c$$$      disp(1:2)= (/0, 16/)
 c$$$      types=(/TYPE1, MPI_UB/)
 c$$$
 c$$$      call MPI_TYPE_STRUCT(2,bl,disp,types,XY2ZY_2,ierror)
 c$$$      call MPI_TYPE_COMMIT(XY2ZY_2,ierror)
 
 c$$$      call MPI_TYPE_VECTOR(NZP,NXP,NXP+1,
-c$$$     &     MPI_DOUBLE_COMPLEX,XY2ZY_2,ierror) 
-c$$$      call MPI_TYPE_COMMIT(XY2ZY_2,ierror)                                     
+c$$$     &     MPI_DOUBLE_COMPLEX,XY2ZY_2,ierror)
+c$$$      call MPI_TYPE_COMMIT(XY2ZY_2,ierror)
 c$$$      ! Box full x to z
 c$$$      call MPI_TYPE_VECTOR(NZ,NXP,NX/2+1,
-c$$$     &     MPI_DOUBLE_COMPLEX,XY2ZY_1,ierr) 
-c$$$      call MPI_TYPE_COMMIT(XY2ZY_1,ierr)                                              
+c$$$     &     MPI_DOUBLE_COMPLEX,XY2ZY_1,ierr)
+c$$$      call MPI_TYPE_COMMIT(XY2ZY_1,ierr)
 c$$$
 c$$$      ! Box full z to x
 c$$$      call MPI_TYPE_VECTOR(NX/2,NX/2,NX/2+1,
-c$$$     &     MPI_DOUBLE_COMPLEX,XY2ZY,ierr) 
-c$$$      call MPI_TYPE_COMMIT(XY2ZY,ierr)                                      
-         
+c$$$     &     MPI_DOUBLE_COMPLEX,XY2ZY,ierr)
+c$$$      call MPI_TYPE_COMMIT(XY2ZY,ierr)
+
 
 
 c$$$c
@@ -855,11 +954,11 @@ c$$$!      FNAME='test.h5'
 c$$$!      call WriteHDF5_var_real(FNAME)
 c$$$
 c$$$      FNAME='out.h5'
-c$$$      call writeHDF5(FNAME)  
+c$$$      call writeHDF5(FNAME)
 c$$$
 c$$$      call mpi_finalize(ierror)
-c$$$      stop 
-c$$$     
+c$$$      stop
+c$$$
 
 C Set a string to determine which input/output files to use
 C When MPI is used, each process will read/write to files with the
@@ -895,7 +994,7 @@ C Initialize any constants here
 
       INTEGER J, N
 
-      IF (RANK.EQ.0) 
+      IF (RANK.EQ.0)
      &     write(*,*) '*******IN INIT_CHAN_MPI *********'
 
       PI=4.D0*ATAN(1.D0)
@@ -1010,7 +1109,7 @@ C Initialize any constants here
           CALL APPLY_BC_2_LOWER(MATL,MATD,MATU,VEC)
         END IF
         IF (RANKY.eq.NPROCY-1) THEN
-! If we have the highest plane, apply the boundary conditions 
+! If we have the highest plane, apply the boundary conditions
           CALL APPLY_BC_2_UPPER(MATL,MATD,MATU,VEC)
         END IF
       RETURN
@@ -1029,7 +1128,7 @@ C Initialize any constants here
           CALL APPLY_BC_2_LOWER_C(MATL_C,MATD_C,MATU_C,VEC_C)
         END IF
         IF (RANK.eq.NPROCS-1) THEN
-! If we have the highest plane, apply the boundary conditions 
+! If we have the highest plane, apply the boundary conditions
           CALL APPLY_BC_2_UPPER_C(MATL_C,MATD_C,MATU_C,VEC_C)
         END IF
       RETURN
@@ -1046,10 +1145,10 @@ C Initialize any constants here
 ! the upper or lowermost process, then apply boundary conditions
         IF (RANKY.eq.0) THEN
 ! If we have the lowest plane, apply the boundary conditions
-          CALL APPLY_BC_1_LOWER(MATL,MATD,MATU,VEC)        
+          CALL APPLY_BC_1_LOWER(MATL,MATD,MATU,VEC)
         END IF
         IF (RANKY.eq.NPROCY-1) THEN
-! If we have the highest plane, apply the boundary conditions 
+! If we have the highest plane, apply the boundary conditions
           CALL APPLY_BC_1_UPPER(MATL,MATD,MATU,VEC)
         END IF
       RETURN
@@ -1068,7 +1167,7 @@ C Initialize any constants here
           CALL APPLY_BC_1_LOWER_C(MATL_C,MATD_C,MATU_C,VEC_C)
         END IF
         IF (RANK.eq.NPROCS-1) THEN
-! If we have the highest plane, apply the boundary conditions 
+! If we have the highest plane, apply the boundary conditions
           CALL APPLY_BC_1_UPPER_C(MATL_C,MATD_C,MATU_C,VEC_C)
         END IF
       RETURN
@@ -1088,7 +1187,7 @@ C Initialize any constants here
           CALL APPLY_BC_3_LOWER(MATL,MATD,MATU,VEC)
         END IF
         IF (RANKY.eq.NPROCY-1) THEN
-! If we have the highest plane, apply the boundary conditions 
+! If we have the highest plane, apply the boundary conditions
           CALL APPLY_BC_3_UPPER(MATL,MATD,MATU,VEC)
         END IF
       RETURN
@@ -1107,7 +1206,7 @@ C Initialize any constants here
           CALL APPLY_BC_3_LOWER_C(MATL_C,MATD_C,MATU_C,VEC_C)
         END IF
         IF (RANK.eq.NPROCS-1) THEN
-! If we have the highest plane, apply the boundary conditions 
+! If we have the highest plane, apply the boundary conditions
           CALL APPLY_BC_3_UPPER_C(MATL_C,MATD_C,MATU_C,VEC_C)
         END IF
       RETURN
@@ -1204,7 +1303,7 @@ C prevent the tridiagonal matrix from becomming singular for i,k=0
       IF (RANKY.EQ.NPROCY-1) THEN
         CALL APPLY_BC_VEL_UPPER
       END IF
- 
+
       RETURN
       END
 
@@ -1225,7 +1324,7 @@ C prevent the tridiagonal matrix from becomming singular for i,k=0
       RETURN
       END
 
- 
+
       SUBROUTINE TRANSPOSE_MPI_XZ_TO_XY()
 ! This subroutine starts with all arrays decomposed in x-z slabs
 ! and transposes the data so that it is decomposed in x-y slabs
@@ -1234,7 +1333,7 @@ c$$$      include 'header'
 c$$$
 c$$$      integer i,j,k,N
 c$$$
-c$$$      real*8 A(0:NX+1,0:NZ+1,0:NY+1) 
+c$$$      real*8 A(0:NX+1,0:NZ+1,0:NY+1)
 c$$$      real*8 buffer(0:NX+1,0:NY+1,0:NZ+1)
 c$$$
 c$$$      real*8 test1(1:NX,1:NY,1:NZ)
@@ -1264,16 +1363,16 @@ c$$$! A should now be indexed by A(NX,NZ/nprocs,NY*nprocs)
 c$$$
 c$$$         n=1
 c$$$         do k=0,NZ/NPROCS-1
-c$$$         do i=0,NX-1 
+c$$$         do i=0,NX-1
 c$$$         do j=1,NY
 c$$$           A(i,k,j)=test2(i+1,j,k+1)
 c$$$         end do
 c$$$         end do
 c$$$         end do
-c$$$  
+c$$$
 c$$$         do n=2,NPROCS
 c$$$         do k=0,NZ/NPROCS-1
-c$$$         do i=0,NX-1 
+c$$$         do i=0,NX-1
 c$$$         do j=2,NY
 c$$$           A(i,k,NY+j-1)=test2(i+1,NY+j,k+1)
 c$$$         end do
@@ -1284,7 +1383,7 @@ c$$$
 c$$$         NX_t=NX
 c$$$         NZ_t=NZ/NPROCS
 c$$$         NY_t=NY*NPROCS-(NPROCS-1)
-c$$$ 
+c$$$
 c$$$! A should now be indexed from A(0:NX_t-1,0:NZ_t/NPROCS-1,1:NY*NPROCS-(NPROCS-1))
 c$$$! (The new wall locations are 1 and NY-(NPROCS-1) )
 c$$$
@@ -1295,27 +1394,27 @@ c$$$          end do
 c$$$          end do
 c$$$
 
-   
+
       RETURN
       END
 
-      
+
 
 
       SUBROUTINE get_minimum_mpi(val)
-      
+
       include 'header'
 
       REAL*8 val,vmin
 
       call MPI_ALLREDUCE(val,vmin,1,MPI_DOUBLE_PRECISION,
      &        MPI_MIN,MPI_COMM_WORLD,ierror)
-      
+
       val=vmin
 
       RETURN
 
-      END 
+      END
 
 
 
@@ -1328,7 +1427,7 @@ c$$$
       COMPLEX*16 TMP(0:NX/2,0:NZP+1,0:NY+1)
 
       INTEGER I,J,K
-      INTEGER JMIN,JMAX 
+      INTEGER JMIN,JMAX
 
       !write(100+RANK,'(1E25.15)') V(0:NX-1,0:NZP-1,1)
       !write(100+RANK) V(0:NX-1,0:NZP-1,1)
@@ -1357,7 +1456,7 @@ c$$$
 
       !write(120+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
       !write(120+RANK) VV(0:NXP-1,0:NZ-1,1)
-      
+
       ! FFT in Z
       DO J=JMIN,JMAX
          CALL FFTWND_F77(FFTW_Z_TO_F_PLAN,NXP,
@@ -1391,7 +1490,7 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
 
 
 
-      SUBROUTINE FFT_XZ_TO_PHYSICAL(VV,V,JMIN,JMAX) 
+      SUBROUTINE FFT_XZ_TO_PHYSICAL(VV,V,JMIN,JMAX)
 
       include 'header'
 
@@ -1457,7 +1556,7 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
             RES=RES+0.5*(VAR(j)+VAR(j-1))*DY(j)
          end do
       END IF
-      RES=RES/LY      
+      RES=RES/LY
 
       END SUBROUTINE
 
@@ -1491,13 +1590,13 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
       end do
       end do
       END IF
-      RES=RES/LZ     
+      RES=RES/LZ
 
       END SUBROUTINE
 
 
       SUBROUTINE END_RUN_MPI(FLAG)
-      
+
       INCLUDE 'header'
 
       LOGICAL FLAG
@@ -1506,6 +1605,5 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
          CALL END_RUN(FLAG)
       END IF
       CALL MPI_BCAST(FLAG,1,MPI_LOGICAL,0,MPI_COMM_WORLD,IERROR)
-      
-      END
 
+      END

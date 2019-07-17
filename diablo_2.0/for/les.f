@@ -1,8 +1,8 @@
       subroutine les_chan
 C This subroutine models the terms owing to the subgrid scale stress
 C if the computation is to be treated as an LES not a DNS
-C This subroutine should be called when the velocity is in fourier space 
-C in the periodic directions, on output, the velocity will be 
+C This subroutine should be called when the velocity is in fourier space
+C in the periodic directions, on output, the velocity will be
 C in physical space.
 C It is assumed that the test filter and the LES filter are performed
 C by the same operation
@@ -19,10 +19,10 @@ C if for the subgrid scalar dissipation
       real*8 EPS_SGS1_MEAN(0:NY+1)
       real*8 U3_bar(0:NY+1)
       real*8 U1_bar(0:NY+1)
- 
+
       real*8 C_SMAG
       parameter (C_SMAG=0.17d0)
-      real*8 DELTA_Y(0:NY+1),DELTA_YF(0:NY+1) 
+      real*8 DELTA_Y(0:NY+1),DELTA_YF(0:NY+1)
       real*8 alpha_sgs,beta_sgs
       real*8 denominator_sum
 
@@ -88,7 +88,7 @@ C Apply Boundary conditions to velocity field
         U1_bar(J)=DBLE(CU1(0,0,J))
         U3_bar(J)=DBLE(CU3(0,0,J))
       END DO
-      END IF 
+      END IF
       IF (USE_MPI) THEN
             CALL MPI_BCAST(U1_bar,NY+2,MPI_DOUBLE_PRECISION,0,
      &     MPI_COMM_Z,ierror)
@@ -104,9 +104,9 @@ C Apply Boundary conditions to velocity field
 ! Compute |S| at GYF points, store in S1
 ! Interpolation to GYF points is easy since by definition
 ! GYF points are exactly midway between neighboring GY points
-! Sij4 and Sij6 have the mean shear 
-! remove the zero value U1,3bar as in 
-! compute strain 
+! Sij4 and Sij6 have the mean shear
+! remove the zero value U1,3bar as in
+! compute strain
       DO J=JSTART,JEND
         DO K=0,NZP-1
           DO I=0,NXM
@@ -123,7 +123,7 @@ C Apply Boundary conditions to velocity field
 ! Optionally remove mean shear
      &                           -0.5d0*(U3_bar(J)-U3_bar(J-1))/DY(J)
      &                           -0.5d0*(U3_bar(J+1)-U3_bar(J))/DY(J+1)
-     &        ))**2.d0 
+     &        ))**2.d0
      &               +2.d0*Sij3(I,K,J)**2.d0 )
           END DO
         END DO
@@ -156,7 +156,7 @@ C Apply Boundary conditions to velocity field
       END DO
 
 ! Now, compute |S|*S_ij, storing in Sij
-! First compute at GYF points 
+! First compute at GYF points
       DO J=JSTART,JEND
         DO K=0,NZP-1
           DO I=0,NXM
@@ -265,7 +265,7 @@ C Apply Boundary conditions to velocity field
       else if ((LES_MODEL_TYPE.EQ.2).or.(LES_MODEL_TYPE.eq.3)) then
 ! Here, use a dynamic smagorinsky model with or without scale similar part
 
-      stop 'ERROR: LES_MODEL_TYPE=2, 3 not supported yet in MPI'  
+      stop 'ERROR: LES_MODEL_TYPE=2, 3 not supported yet in MPI'
 
       end if
 
@@ -283,7 +283,7 @@ C Apply Boundary conditions to velocity field
             CF3(I,K,J)=CF3(I,K,J)
      &                -CIKX(I)*CSij5(I,K,J)
      &                -(CSij6(I,K,J+1)-CSij6(I,K,J))/DYF(J)
-     &                -CIKZ(K)*CSij3(I,K,J)   
+     &                -CIKZ(K)*CSij3(I,K,J)
           END DO
         END DO
       END DO
@@ -376,7 +376,7 @@ C Apply Boundary conditions to velocity field
      &                -CIKZ(K)*CSij3(I,K,J)
           END DO
         END DO
-      END DO 
+      END DO
         CALL FFT_XZ_TO_PHYSICAL(CTEMP,TEMP,0,NY+1)
         do J=0,NY+1
           do I=0,NXM
@@ -453,7 +453,7 @@ C Apply Boundary conditions to velocity field
           end do
           end do
         end do
- 
+
       call mpi_allreduce(mpi_in_place,S1_mean,NY+2,MPI_DOUBLE_PRECISION,
      &     MPI_SUM,MPI_COMM_Z,ierror)
       call mpi_allreduce(mpi_in_place,NU_T_mean,NY+2
@@ -482,16 +482,16 @@ C Apply Boundary conditions to velocity field
       Diag=gyf(1:NY)
       call WriteStatH5(FNAME,gname,Diag)
 
-      gname='nu_sgs' 
+      gname='nu_sgs'
       Diag=NU_T_mean(1:NY)
-      call WriteStatH5(FNAME,gname,Diag)     
+      call WriteStatH5(FNAME,gname,Diag)
 
-      gname='eps_sgs1' 
+      gname='eps_sgs1'
       Diag=EPS_SGS1_MEAN(1:NY)
-      call WriteStatH5(FNAME,gname,Diag)     
-    
+      call WriteStatH5(FNAME,gname,Diag)
+
       END IF
- 
+
 #else
 ! Here we aren't using HDF5, so write to text file
       IF (RANKZ.EQ.0) THEN
@@ -528,15 +528,17 @@ C For use in the LES model in channel flow (2 periodic directions)
       include 'header_les'
 
       integer I,J,K,ij
-     
-      DO J=1,NY
+
+      DO J=1,NY+1
         DO K=0,TNKZ
           DO I=0,NXP-1
             CSij1(I,K,J)=CIKX(I)*CU1(I,K,J)
-            CSij2(I,K,J)=(CU2(I,K,J+1)-CU2(I,K,J))/DYF(j) 
-            CSij3(I,K,J)=CIKZ(K)*CU3(I,K,J)  
+            CSij3(I,K,J)=CIKZ(K)*CU3(I,K,J)
             CSij5(I,K,J)=0.5d0*(CIKZ(K)*CU1(I,K,J)
      &                  +CIKX(I)*CU3(I,K,J))
+            if (J /= Ny + 1) then
+              CSij2(I,K,J)=(CU2(I,K,J+1)-CU2(I,K,J))/DYF(j)
+            end if
           END DO
         END DO
       END DO
@@ -544,12 +546,15 @@ C For use in the LES model in channel flow (2 periodic directions)
         DO K=0,TNKZ
           DO I=0,NXP-1
             CSij4(I,K,J)=0.5d0*((CU1(I,K,J)-CU1(I,K,J-1))/DY(j)
-     &                          +CIKX(I)*CU2(I,K,J) ) 
+     &                          +CIKX(I)*CU2(I,K,J) )
             CSij6(I,K,J)=0.5d0*(CIKZ(K)*CU2(I,K,J)
      &                         +(CU3(I,K,J)-CU3(I,K,J-1))/DY(j) )
           END DO
         END DO
-      END DO  
+      END DO
+
+      ! Need to communicate down CSij2 to each j = Ny + 1
+      call ghost_CSij2_mpi
 
 
        CALL FFT_XZ_TO_PHYSICAL(CSij1,Sij1,0,NY+1)
@@ -564,7 +569,7 @@ C For use in the LES model in channel flow (2 periodic directions)
       RETURN
       END
 
- 
+
       subroutine les_filter_chan(A,jstart,jend)
 ! This subroutine applies the les filter to the input field
 ! The indices to the start and end of the array in the y-direction
@@ -591,7 +596,7 @@ C For use in the LES model in channel flow (2 periodic directions)
 !      W0=1.d0/2.d0
 !      W1=1.d0/4.d0
 !      W2=0.d0
-      Wm1_j=1.d0/4.d0  
+      Wm1_j=1.d0/4.d0
       W0_j=1.d0/2.d0
       W1_j=1.d0/4.d0
 ! The following is for the 5-point trapezoidal rule, alpha*beta=9
@@ -634,7 +639,7 @@ C For use in the LES model in channel flow (2 periodic directions)
       end do
       ip1(NXM)=0
       do i=0,NX-3
-        ip2(i)=i+2    
+        ip2(i)=i+2
       end do
       ip2(NX-2)=0
       ip2(NXM)=1
@@ -645,9 +650,9 @@ C For use in the LES model in channel flow (2 periodic directions)
             B(i,k,j)=Wm2*A(im2(i),k,j)+Wm1*A(im1(i),k,j)+W0*A(i,k,j)
      &         +W1*A(ip1(i),k,j)+W2*A(ip2(i),k,j)
           end do
-        end do  
+        end do
       end do
- 
+
 ! Apply filter in the z-diretion
 !      B=Wm2*CSHIFT(B,-2,2)+Wm1*CSHIFT(B,-1,2)+W0*B+W1*CSHIFT(B,1,2)
 !     &       +W2*CSHIFT(B,2,2)
@@ -667,7 +672,7 @@ C For use in the LES model in channel flow (2 periodic directions)
       end do
       kp1(NZM)=0
       do k=0,NZ-3
-        kp2(k)=k+2    
+        kp2(k)=k+2
       end do
       kp2(NZ-2)=0
       kp2(NZM)=1
@@ -678,7 +683,7 @@ C For use in the LES model in channel flow (2 periodic directions)
             A(i,k,j)=Wm2*B(i,km2(k),j)+Wm1*B(i,km1(k),j)+W0*B(i,k,j)
      &         +W1*B(i,kp1(k),j)+W2*B(i,kp2(k),j)
           end do
-        end do  
+        end do
       end do
 
 ! Apply filter in the vertical direction at all physical cells
@@ -691,7 +696,7 @@ C For use in the LES model in channel flow (2 periodic directions)
 !       do j=jstart+1,jend-1
 !         do k=0,NZM
 !           do i=0,NXM
-!             B(i,k,j)=Wm1_j*B(i,k,j-1)+W0_j*B(i,k,j)+W1_j*B(i,k,j+1)  
+!             B(i,k,j)=Wm1_j*B(i,k,j-1)+W0_j*B(i,k,j)+W1_j*B(i,k,j+1)
 !           end do
 !         end do
 !       end do
@@ -722,7 +727,7 @@ C For use in the LES model in channel flow (2 periodic directions)
       real*8 PI, LX, LZ
       integer NKX,NKZ,TNKZ
 
-      real*8 KX(0:NX/3),KZ(0:2*(NZ/3))  
+      real*8 KX(0:NX/3),KZ(0:2*(NZ/3))
 
       real*8 A(0:NX+1,0:NZ+1,0:NY+1)
 
@@ -744,7 +749,7 @@ C For use in the LES model in channel flow (2 periodic directions)
 
       LX=PI
       LZ=2.d0*PI
-   
+
 ! Get the wavenumber vectors:
         NKX=NX/3
         DO I=0,NKX
@@ -766,7 +771,7 @@ C For use in the LES model in channel flow (2 periodic directions)
              B(i,k,j)=A(i,k,j)
            end do
          enddo
-       end do 
+       end do
 
 
 ! Convert to fourier space
@@ -787,13 +792,13 @@ C For use in the LES model in channel flow (2 periodic directions)
 ! Now, convert back to physical space
       call fft_xz_to_physical(CB,B,jstart,jend)
 
-       do j=jstart,jend 
+       do j=jstart,jend
          do k=0,NZM
            do i=0,NXM
              A(i,k,j)=B(i,k,j)
            end do
          end do
-       end do 
+       end do
 
       return
       end
@@ -831,7 +836,7 @@ C For use in the LES model in channel flow (2 periodic directions)
 
       IF (U_BC_YMIN.eq.1) THEN
         IF ((RANKY.eq.0).or.(.NOT.USE_MPI)) THEN
-! We are on a process at the bottom wall          
+! We are on a process at the bottom wall
          DO K=0,TNKZ
            DO I=0,NXP-1
              CU1(I,K,1)=CU1(I,K,2)
@@ -843,7 +848,7 @@ C For use in the LES model in channel flow (2 periodic directions)
 
       IF (W_BC_YMIN.eq.1) THEN
         IF ((RANKY.eq.0).or.(.NOT.USE_MPI)) THEN
-! We are on a process at the bottom wall          
+! We are on a process at the bottom wall
          DO K=0,TNKZ
            DO I=0,NXP-1
              CU3(I,K,1)=CU3(I,K,2)
@@ -855,7 +860,3 @@ C For use in the LES model in channel flow (2 periodic directions)
 
       RETURN
       END
-
-
-
-
