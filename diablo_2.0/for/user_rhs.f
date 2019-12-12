@@ -83,13 +83,13 @@
 ! End do N_TH
       END DO
 
-      END IF
-
 ! Add sponge layer forcing
       DO N=1,N_TH
         CALL SPONGE_TH(N)
       END DO
       CALL SPONGE_VEL
+      
+      END IF
 
       RETURN
       END
