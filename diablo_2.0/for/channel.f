@@ -1661,9 +1661,9 @@ C Define grid spacing
          if (rankY == NprocY - 1) then
            dyf(Ny + 1) = dyf(Ny)
          else
-           call mpi_send(dyf(Ny - 1), 1, mpi_double_precision, rankY + 1,
+           call mpi_send(dyf(Ny-1),1,mpi_double_precision,rankY+1,
      &          110 + rankY, mpi_comm_y, ierror)
-           call mpi_recv(dyf(Ny + 1), 1, mpi_double_precision, rankY + 1,
+           call mpi_recv(dyf(Ny+1),1,mpi_double_precision,rankY+1,
      &          100 + rankY + 1, mpi_comm_y, status, ierror)
          end if
 
