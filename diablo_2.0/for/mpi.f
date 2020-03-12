@@ -460,7 +460,7 @@
       END
 
 
-      subroutine ghost_CSij2_mpi
+      subroutine GHOST_CSij2_MPI
 
 ! This subroutine is part of the MPI package for the LES subroutine
 ! to compute the strain
@@ -478,8 +478,8 @@
       ! The communication will be done in Fourier space, so these arrays should
       ! be complex arrays to match the velocity
       ! The size of the buffer array is 0:Nxp-1,0:NZP-1
-      COMPLEX*16 ocpack(0:Nxp-1, 0:Nzp - 1)
-      COMPLEX*16 icpack(0:Nxp-1, 0:Nzp - 1)
+      COMPLEX*16 ocpack(0:Nxp-1, 0:TNKZ)
+      COMPLEX*16 icpack(0:Nxp-1, 0:TNKZ)
 
       ! If we are using more than one processor, then we need to pass data
 
@@ -492,40 +492,40 @@
           ! data at the upper ghost cells.
 
           ! We don't need CSij2 at the boundaries (dictates CSij4' & 6' only)
-          do k = 0, tNkz
+          do k = 0, TNKZ
             do i = 0, Nxp - 1
               CSij2(i, k, Ny + 1) = -10000.d0
             end do
           end do
 
           ! Now, send data down the chain
-          do k = 0, tNkz
+          do k = 0, TNKZ
             do i = 0, Nxp - 1
               ocpack(i, k) = CSij2(i, k, 2)
             end do
           end do
           ! Now, we have packed the data into a compact array, pass the data up
-          call mpi_send(ocpack, (Nxp) * (Nzp)
+          call mpi_send(ocpack, (Nxp) * (TNKZ+1)
      &          , mpi_double_complex
      &          , rankY - 1, 3, mpi_comm_y, ierror)
         else if (rankY > 0) then
           ! Here, we are one of the middle processes and we need to pass data
           ! down and recieve data from above us
-          do k = 0, tNkz
+          do k = 0, TNKZ
             do i = 0, Nxp - 1
               ocpack(i, k) = CSij2(i, k, 2)
             end do
           end do
 
-          call mpi_send(ocpack, (Nxp) * (Nzp)
+          call mpi_send(ocpack, (Nxp) * (TNKZ+1)
      &          , mpi_double_complex
      &          , rankY - 1, 3, mpi_comm_y, ierror)
 
-          call mpi_recv(icpack, (Nxp) * (Nzp)
+          call mpi_recv(icpack, (Nxp) * (TNKZ+1)
      &          , mpi_double_complex
      &          , rankY + 1, 3, mpi_comm_y, status, ierror)
           ! Now, unpack the data that we have recieved
-          do k = 0, tNkz
+          do k = 0, TNKZ
             do i = 0, Nxp - 1
               CSij2(i, k, Ny + 1) = icpack(i, k)
             end do
@@ -533,11 +533,11 @@
         else
           ! Here, we must be the lowest process (RANK=0) and we need to receive
           ! data from above
-          call mpi_recv(icpack, (Nxp) * (Nzp)
+          call mpi_recv(icpack, (Nxp) * (TNKZ+1)
      &          , mpi_double_complex
      &          , rankY + 1, 3, mpi_comm_y, status, ierror)
           ! Unpack the data that we have recieved
-          do k = 0, tNkz
+          do k = 0, TNKZ
             do i = 0, Nxp - 1
               CSij2(i, k, Ny + 1) = icpack(i, k)
             end do
@@ -547,7 +547,7 @@
       else
         ! Here, NprocY=1, so we just need to set the boundary values
         ! Set CSij2 (cu2(i, k, Ny + 2) - cu2(i, k, Ny + 1)) / dyf(Ny + 1)
-        do k = 0, tNkz
+        do k = 0, TNKZ
           do i = 0, Nxp - 1
             CSij2(i, k, Ny + 1) = -10000.d0
           end do
