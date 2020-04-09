@@ -15,7 +15,7 @@
       dt=999.d0
 
 ! Set the timestep based on viscosity and diffusivity
-      dt=min(dt,0.5d0*min(dx(1),dy(1))/NU)
+      dt=min(dt,0.5d0*min(dx(1),dy(1))**2.d0/NU)
       do n=1,N_TH
         dt=min(dt,dt*NU/(NU/PR(n)))
       end do
