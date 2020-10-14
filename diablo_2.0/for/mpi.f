@@ -181,6 +181,173 @@
       RETURN
       END
 
+      SUBROUTINE GHOST_LES_MPI_KAPPA_T
+! This subroutine is part of the MPI package for the LES subroutine
+! Here, after calculating the SGS viscosity, NU_T on each core,
+! We need to share the ghost cells between neighboring processors
+
+      include 'header'
+
+      integer i,j,k,N
+
+! Define the arrays that will be used for data packing.  This makes the
+! communication between processes more efficient by only requiring one
+! send and recieve.
+! The communication will be done in Fourier space, so these arrays should
+! be complex arrays to match the velocity
+! The size of the buffer array is 0:NXM,0:NZP-1
+      REAL*8 OCPACK(0:NXM,0:NZP-1)
+      REAL*8 ICPACK(0:NXM,0:NZP-1)
+
+      DO N=1,N_TH
+
+! If we are using more than one processor, then we need to pass data
+
+      IF (NPROCY.gt.1) THEN
+
+! First, Pass data up the chain to higher ranked processes
+
+      IF (RANKY.eq.0) THEN
+! If we are the lowest ranked process, then we don't need to recieve
+! data at the lower ghost cells. Instead, set NU_T=0 at the lower wall
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,1,N)=0.d0
+            KAPPA_T(I,K,2,N)=0.d0
+          END DO
+        END DO
+
+! Pass data up to the next process from GY(NY)
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=KAPPA_T(I,K,NY,N)
+          END DO
+        END DO
+! Now, we have packed the data into a compact array, pass the data up
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,1,MPI_COMM_Y,IERROR)
+
+! End if RANK=0
+      ELSE IF (RANKY.lt.NPROCY-1) THEN
+! Here, we are one of the middle processes and we need to pass data
+! up and recieve data from below
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=KAPPA_T(I,K,NY,N)
+          END DO
+        END DO
+! Use MPI_SENDRECV since we need to recieve and send data
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,1,MPI_COMM_Y,IERROR)
+
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,1,MPI_COMM_Y,STATUS,IERROR)
+! Now, unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,1,N)=ICPACK(I,K)
+          END DO
+        END DO
+
+      ELSE
+! Otherwise, we must be the uppermost process with RANK=NPROCS-1
+! Here, we need to recieve data from below, but don't need to send data up
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,1,MPI_COMM_Y,STATUS,IERROR)
+! Unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,1,N)=ICPACK(I,K)
+          END DO
+        END DO
+      END IF
+
+! Now, we have hit the top process.  Set the BCs and pass data down
+
+      IF (RANKY.eq.NPROCY-1) THEN
+! If we are the higest ranked process, then we don't need to recieve
+! data at the upper ghost cells.
+! Set KAPPA_T=0 at the upper wall
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,NY,N)=0.d0
+            KAPPA_T(I,K,NY+1,N)=0.d0
+          END DO
+        END DO
+
+! Now, send data down the chain
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=KAPPA_T(I,K,2,N)
+          END DO
+        END DO
+! Now, we have packed the data into a compact array, pass the data up
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,3,MPI_COMM_Y,IERROR)
+      ELSE IF (RANKY.GT.0) THEN
+! Here, we are one of the middle processes and we need to pass data
+! down and recieve data from above us
+        DO K=0,NZP-1
+          DO I=0,NXM
+            OCPACK(I,K)=KAPPA_T(I,K,2,N)
+          END DO
+        END DO
+
+        CALL MPI_SEND(OCPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY-1,3,MPI_COMM_Y,IERROR)
+
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,3,MPI_COMM_Y,STATUS,IERROR)
+! Now, unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,NY+1,N)=ICPACK(I,K)
+          END DO
+        END DO
+      ELSE
+! Here, we must be the lowest process (RANK=0) and we need to recieve
+! data from above
+        CALL MPI_RECV(ICPACK,(NXM+1)*(NZP)
+     &               ,MPI_DOUBLE_PRECISION
+     &               ,RANKY+1,3,MPI_COMM_Y,STATUS,IERROR)
+! Unpack the data that we have recieved
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,NY+1,N)=ICPACK(I,K)
+          END DO
+        END DO
+      END IF
+
+      ELSE
+! Here, NPROCY=1, so we just need to set the boundary values
+! Set NU_T=0 at the lower wall
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,1,N)=0.d0
+            KAPPA_T(I,K,2,N)=0.d0
+          END DO
+        END DO
+! Set NU_T=0 at the upper wall
+        DO K=0,NZP-1
+          DO I=0,NXM
+            KAPPA_T(I,K,NY,N)=0.d0
+            KAPPA_T(I,K,NY+1,N)=0.d0
+          END DO
+        END DO
+
+      END IF
+
+      END DO
+
+      RETURN
+      END
 
       SUBROUTINE GHOST_LES_MPI
 ! This subroutine is part of the MPI package for the LES subroutine
@@ -459,105 +626,6 @@
       RETURN
       END
 
-
-      subroutine GHOST_CSij2_MPI
-
-! This subroutine is part of the MPI package for the LES subroutine
-! to compute the strain
-! Share down the CSij2 Ny + 1 ghost cell between neighboring processors
-! CSij2(Ny+1) is needed to compute temp at Ny
-
-      include 'header'
-      include 'header_les'
-
-      integer i, j, k, n
-
-      ! Define the arrays that will be used for data packing.  This makes the
-      ! communication between processes more efficient by only requiring one
-      ! send and recieve.
-      ! The communication will be done in Fourier space, so these arrays should
-      ! be complex arrays to match the velocity
-      ! The size of the buffer array is 0:Nxp-1,0:NZP-1
-      COMPLEX*16 ocpack(0:Nxp-1, 0:TNKZ)
-      COMPLEX*16 icpack(0:Nxp-1, 0:TNKZ)
-
-      ! If we are using more than one processor, then we need to pass data
-
-      if (NprocY > 1) then
-
-        ! Set the BCs and pass data down
-
-        if (rankY == NprocY - 1) then
-          ! If we are the higest ranked process, then we don't need to recieve
-          ! data at the upper ghost cells.
-
-          ! We don't need CSij2 at the boundaries (dictates CSij4' & 6' only)
-          do k = 0, TNKZ
-            do i = 0, Nxp - 1
-              CSij2(i, k, Ny + 1) = -10000.d0
-            end do
-          end do
-
-          ! Now, send data down the chain
-          do k = 0, TNKZ
-            do i = 0, Nxp - 1
-              ocpack(i, k) = CSij2(i, k, 2)
-            end do
-          end do
-          ! Now, we have packed the data into a compact array, pass the data up
-          call mpi_send(ocpack, (Nxp) * (TNKZ+1)
-     &          , mpi_double_complex
-     &          , rankY - 1, 3, mpi_comm_y, ierror)
-        else if (rankY > 0) then
-          ! Here, we are one of the middle processes and we need to pass data
-          ! down and recieve data from above us
-          do k = 0, TNKZ
-            do i = 0, Nxp - 1
-              ocpack(i, k) = CSij2(i, k, 2)
-            end do
-          end do
-
-          call mpi_send(ocpack, (Nxp) * (TNKZ+1)
-     &          , mpi_double_complex
-     &          , rankY - 1, 3, mpi_comm_y, ierror)
-
-          call mpi_recv(icpack, (Nxp) * (TNKZ+1)
-     &          , mpi_double_complex
-     &          , rankY + 1, 3, mpi_comm_y, status, ierror)
-          ! Now, unpack the data that we have recieved
-          do k = 0, TNKZ
-            do i = 0, Nxp - 1
-              CSij2(i, k, Ny + 1) = icpack(i, k)
-            end do
-          end do
-        else
-          ! Here, we must be the lowest process (RANK=0) and we need to receive
-          ! data from above
-          call mpi_recv(icpack, (Nxp) * (TNKZ+1)
-     &          , mpi_double_complex
-     &          , rankY + 1, 3, mpi_comm_y, status, ierror)
-          ! Unpack the data that we have recieved
-          do k = 0, TNKZ
-            do i = 0, Nxp - 1
-              CSij2(i, k, Ny + 1) = icpack(i, k)
-            end do
-          end do
-        end if
-
-      else
-        ! Here, NprocY=1, so we just need to set the boundary values
-        ! Set CSij2 (cu2(i, k, Ny + 2) - cu2(i, k, Ny + 1)) / dyf(Ny + 1)
-        do k = 0, TNKZ
-          do i = 0, Nxp - 1
-            CSij2(i, k, Ny + 1) = -10000.d0
-          end do
-        end do
-
-      end if
-
-      return
-      end
-
 C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
       SUBROUTINE THOMAS_FORWARD_REAL_MPI(A,B,C,G,INY,INX)
 C----*|--.---------.---------.---------.---------.---------.---------.-|-------|
@@ -671,7 +739,11 @@ C Unpack the data
       END IF
 
       DO J=2,INY
-        A(I,J)=-A(I,J)/B(I,J-1)
+        IF (B(I,J-1).ne.0.d0) THEN
+          A(I,J)=-A(I,J)/B(I,J-1)
+        ELSE
+          A(I,J)=0.d0
+        END IF
         B(I,J)=B(I,J)+A(I,J)*C(I,J-1)
         G(I,J)=G(I,J)+A(I,J)*G(I,J-1)
       END DO
@@ -721,7 +793,11 @@ c 0 0... 0 0... c30...
        END IF
 ! All processes solve from INY..1
       DO J=INY,0,-1
-        G(I,J)=(G(I,J)-C(I,J)*G(I,J+1))/B(I,J)
+        IF (B(I,J).ne.0.d0) THEN
+          G(I,J)=(G(I,J)-C(I,J)*G(I,J+1))/B(I,J)
+        ELSE
+          G(I,J)=0.d0
+        END IF
       END DO
       IF (RANKY.NE.0) THEN
           ICPACK(1)=G(I,2)
@@ -758,14 +834,24 @@ C If we aren't the highest process, then wait for data
         CALL MPI_RECV(G(I,INY+1),1,MPI_DOUBLE_COMPLEX,RANKY+1,11
      &               ,MPI_COMM_Y,status,ierror)
         J=INY
-        G(I,J)=(G(I,J)-C(I,J)*G(I,J+1))/B(I,J)
+        if (B(I,J).ne.0.d0) THEN
+          G(I,J)=(G(I,J)-C(I,J)*G(I,J+1))/B(I,J)
+        END IF
       ELSE
 C Else, if we are the highest process, then compute the solution at j=INY
-        G(I,INY)=G(I,INY)/B(I,INY)
+        IF (B(I,INY).ne.0.d0) THEN
+          G(I,INY)=G(I,INY)/B(I,INY)
+        ELSE
+          G(I,INY)=0.d0
+        END IF
       END IF
 
       DO J=INY-1,1,-1
-        G(I,J)=(G(I,J)-C(I,J)*G(I,J+1))/B(I,J)
+        IF (B(I,J).ne.0.d0) THEN
+          G(I,J)=(G(I,J)-C(I,J)*G(I,J+1))/B(I,J)
+        ELSE
+          G(I,J)=0.d0
+        END IF
       END DO
 
       IF (RANKY.NE.0) THEN
@@ -803,6 +889,8 @@ C----*|--.---------.---------.---------.---------.---------.---------.-|-----|
      *                FFTW_OUT_OF_PLACE=0,  FFTW_IN_PLACE=8,
      *                FFTW_USE_WISDOM=16,   FFTW_THREADSAFE=128 )
 
+
+
 ! This subroutine initializes all mpi variables
 
 c$$$      integer(C_INTPTR_T) :: L,M
@@ -811,13 +899,15 @@ c$$$      complex(C_DOUBLE_COMPLEX), pointer :: data(:,:)
 c$$$      integer(C_INTPTR_T) :: i, j, alloc_local, local_M, local_j_offset
 c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
 
+
       CALL MPI_INIT(IERROR)
       CALL MPI_COMM_SIZE(MPI_COMM_WORLD,IPROCS,IERROR)
       CALL MPI_COMM_RANK(MPI_COMM_WORLD,RANK,IERROR)
 
+      ! NPROCY=2
       IF (NPROCS.NE.IPROCS) THEN
-         IF (RANK.EQ.0) WRITE(*,*) 'ERROR: compiled with ',NPROCS,
-     &        'cores, running with ',IPROCS,' cores.'
+         IF (RANK.EQ.0) WRITE(*,*) ' NPROCS is not equal to',
+     &        ' the number of processes which we run on. '
          CALL MPI_FINALIZE(ierror)
          stop
       END IF
@@ -828,6 +918,7 @@ c$$$      INTEGER(C_INTPTR_T) NZP,iNZ,alloc_local
          CALL MPI_FINALIZE(ierror)
          stop
       END IF
+      ! NPROCSZ=NPROCS/NPROCY
 
       DIMS(2)=NPROCY
       DIMS(1)=NPROCZ
@@ -888,10 +979,9 @@ c     Define datatypes
 c     ------------------------------
 
       ! Box full x to z (1)
-      call MPI_TYPE_VECTOR(NZP,NXP,NX/2+1,
+      call MPI_TYPE_VECTOR(NZP,NXP,NX/2,
      &     MPI_DOUBLE_COMPLEX,TYPE1,ierror)
       call MPI_TYPE_COMMIT(TYPE1,ierror)
-
       bl(1:2)=(/1, 1/)
       disp(1:2)= (/0, NXP*16/)
       types=(/TYPE1, MPI_UB/)
@@ -901,18 +991,22 @@ c     ------------------------------
       call MPI_TYPE_FREE(TYPE1,ierror)
 
       ! Box full x to z (2)
-      call MPI_TYPE_VECTOR(NZP,NXP,NXP+1,
-     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror)
-      call MPI_TYPE_COMMIT(TYPE1,ierror)
+C$$$      call MPI_TYPE_VECTOR(NZP,NXP,NXP+1,
+C$$$     &     MPI_DOUBLE_COMPLEX,TYPE1,ierror)
+C$$$      call MPI_TYPE_COMMIT(TYPE1,ierror)
 
-      bl(1:2)=(/1, 1/)
-      disp(1:2)= (/0, NZP*(NXP+1)*16/)
-      types=(/TYPE1, MPI_UB/)
+C$$$      bl(1:2)=(/1, 1/)
+C$$$      disp(1:2)= (/0, NZP*(NXP+1)*16/)
+C$$$      types=(/TYPE1, MPI_UB/)
 
-      call MPI_TYPE_STRUCT(2,bl,disp,types,XY2ZY_2,ierror)
+C$$$      call MPI_TYPE_STRUCT(2,bl,disp,types,XY2ZY_2,ierror)
+C$$$      call MPI_TYPE_COMMIT(XY2ZY_2,ierror)
+C$$$      call MPI_TYPE_FREE(TYPE1,ierror)
+
+      call MPI_TYPE_VECTOR(NZP,NXP,NXP,
+     &     MPI_DOUBLE_COMPLEX,XY2ZY_2,ierror)
       call MPI_TYPE_COMMIT(XY2ZY_2,ierror)
-      call MPI_TYPE_FREE(TYPE1,ierror)
-
+       
 c     ///////////////////////////////////
 c     OTHER POSSIBLE TRANSPOSES!!!!
 c     ///////////////////////////////////
@@ -943,37 +1037,20 @@ c$$$      call MPI_TYPE_COMMIT(XY2ZY,ierr)
 
 
 
-c$$$c
-c$$$c     CHECK POINTS
-c$$$c
-c$$$      FNAME='start.h5'
-c$$$      call readHDF5(FNAME)
-c$$$
-c$$$!      tvar=U1
-c$$$!      FNAME='test.h5'
-c$$$!      call WriteHDF5_var_real(FNAME)
-c$$$
-c$$$      FNAME='out.h5'
-c$$$      call writeHDF5(FNAME)
-c$$$
-c$$$      call mpi_finalize(ierror)
-c$$$      stop
-c$$$
-
 C Set a string to determine which input/output files to use
 C When MPI is used, each process will read/write to files with the
 C number of their rank (+1) appended to the end of the file.
 C The string MPI_IO_NUM will be used to define the RANK+1 for each process
-        IF (NPROCY.lt.10) THEN
+        IF (NPROCY.le.10) THEN
           MPI_IO_NUM=CHAR(MOD(RANKY+1,10)+48)
-        ELSE IF (NPROCY.lt.100) THEN
+        ELSE IF (NPROCY.le.100) THEN
           MPI_IO_NUM=CHAR(MOD(RANKY+1,100)/10+48)
      &             //CHAR(MOD(RANKY+1,10)+48)
-        ELSE IF (NPROCY.lt.1000) THEN
+        ELSE IF (NPROCY.le.1000) THEN
           MPI_IO_NUM=CHAR(MOD(RANKY+1,1000)/100+48)
      &             //CHAR(MOD(RANKY+1,100)/10+48)
      &             //CHAR(MOD(RANKY+1,10)+48)
-        ELSE IF (NPROCY.lt.10000) THEN
+        ELSE IF (NPROCY.le.10000) THEN
           MPI_IO_NUM=CHAR(MOD(RANKY+1,10000)/1000+48)
      &             //CHAR(MOD(RANKY+1,1000)/100+48)
      &             //CHAR(MOD(RANKY+1,100)/10+48)
@@ -1006,7 +1083,7 @@ C Initialize any constants here
         IF (U_BC_YMIN.EQ.0) THEN
           JSTART=2
         ELSE IF (U_BC_YMIN.EQ.1) THEN
-          JSTART=1
+          JSTART=2
         ELSE
           JSTART=2
         END IF
@@ -1027,7 +1104,7 @@ C Initialize any constants here
         IF (U_BC_YMAX.EQ.0) THEN
           JEND=NY-1
         ELSE IF (U_BC_YMAX.EQ.1) THEN
-          JEND=NY
+          JEND=NY-1
         ELSE
           JEND=NY-1
         END IF
@@ -1308,6 +1385,38 @@ C prevent the tridiagonal matrix from becomming singular for i,k=0
       END
 
 
+      SUBROUTINE APPLY_BC_SCALAR_MPI
+! This subroutine applies the boundary conditions for the Poisson Eq.
+! Note, MATL, MATD, etc. are dimensioned in header
+      INCLUDE 'header'
+
+! Apply Boundary conditions to velocity field
+      IF (RANKY.EQ.0) THEN
+        CALL APPLY_BC_SCALAR_LOWER
+      END IF
+      IF (RANKY.EQ.NPROCY-1) THEN
+        CALL APPLY_BC_SCALAR_UPPER
+      END IF
+
+      RETURN
+      END
+
+      SUBROUTINE APPLY_BC_TH_PHYS_MPI
+! This subroutine applies the boundary conditions for the Poisson Eq.
+! Note, MATL, MATD, etc. are dimensioned in header
+      INCLUDE 'header'
+
+! Apply Boundary conditions to velocity field
+      IF (RANKY.EQ.0) THEN
+        CALL APPLY_BC_TH_PHYS_LOWER
+      END IF
+      IF (RANKY.EQ.NPROCY-1) THEN
+        CALL APPLY_BC_TH_PHYS_UPPER
+      END IF
+
+      RETURN
+      END
+
       SUBROUTINE APPLY_BC_VEL_PHYS_MPI
 ! This subroutine applies the boundary conditions for the Poisson Eq.
 ! Note, MATL, MATD, etc. are dimensioned in header
@@ -1425,6 +1534,8 @@ c$$$
       REAL*8     V  (0:NX+1,0:NZP+1,0:NY+1)
       COMPLEX*16 VV (0:NXP ,0:NZ +1,0:NY+1)
       COMPLEX*16 TMP(0:NX/2,0:NZP+1,0:NY+1)
+      COMPLEX*16 TMP2(0:NXP-1,0:NZ-1)
+      COMPLEX*16 TMP_1A(0:NX/2-1,0:NZP-1,0:NY+1)
 
       INTEGER I,J,K
       INTEGER JMIN,JMAX
@@ -1439,9 +1550,13 @@ c$$$
         DO K=0,NZP-1
           DO I=0,NKX
             TMP(I,K,J)=TMP(I,K,J)/NX
+            TMP_1A(I,K,J)=TMP(I,K,J)
           END DO
           DO I=NKX+1,NX/2
             TMP(I,K,J)=cmplx(0.d0,0.d0)
+          END DO
+          DO I=NKX+1,NX/2-1
+            TMP_1A(I,K,J)=TMP(I,K,J)
           END DO
         END DO
       END DO
@@ -1450,12 +1565,20 @@ c$$$
       !write(110+RANK) TMP(0:NX/2,0:NZP-1,1)
 
       DO J=JMIN,JMAX
-         call mpi_alltoall(TMP(0,0,J),1,XY2ZY_1,
-     &        VV(0,0,J),1,XY2ZY_2,MPI_COMM_Z,IERROR)
+         call mpi_alltoall(TMP_1A(0,0,J),1,XY2ZY_1,TMP2,1,XY2ZY_2,
+     &        MPI_COMM_Z,IERROR)
+         DO K=0,NZ-1
+            DO I=0,NXP-1
+               VV(I,K,J)=TMP2(I,K)
+            END DO
+            VV(NXP,K,J)=cmplx(0.d0,0.d0)
+         END DO
+         DO K=NZ,NZ+1
+            DO I=0,NXP
+               VV(I,K,J)=cmplx(0.d0,0.d0)    
+            ENDDO 
+         ENDDO
       END DO
-
-      !write(120+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
-      !write(120+RANK) VV(0:NXP-1,0:NZ-1,1)
 
       ! FFT in Z
       DO J=JMIN,JMAX
@@ -1483,9 +1606,6 @@ c$$$         END DO
          END DO
       END DO
 
-C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
-      !write(130+RANK) VV(0:NXP-1,0:NZ-1,1)
-
       END SUBROUTINE
 
 
@@ -1497,6 +1617,8 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
       REAL*8     V  (0:NX+1,0:NZP+1,0:NY+1)
       COMPLEX*16 VV (0:NXP ,0:NZ +1,0:NY+1)
       COMPLEX*16 TMP(0:NX/2,0:NZP+1,0:NY+1)
+      COMPLEX*16 TMP2(0:NXP-1,0:NZ-1)
+      COMPLEX*16 TMP_1A(0:NX/2-1,0:NZP-1,0:NY+1)
 
       INTEGER I,J,K
       INTEGER JMIN,JMAX
@@ -1509,21 +1631,38 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
                VV(I,NZ-1+K-NKZ,J)=VV(I,NKZ+K,J)
             END DO
          END DO
-         DO I=0,NXP
-            DO K=NKZ+1,NZ-NKZ-1
+         DO K=NKZ+1,NZ-NKZ-1
+            DO I=0,NXP
                VV(I,K,J)=cmplx(0.d0,0.d0)
             END DO
-!            DO K=NZ,NZ+1
-!               VV(I,K,J)=cmplx(0.d0,0.d0)
-!            END DO
          END DO
          CALL FFTWND_F77(FFTW_Z_TO_P_PLAN,NXP,
      *        VV(0,0,J), NXP+1, 1, VV(0,0,J), NXP+1, 1)
       END DO
 
       DO J=JMIN,JMAX
-         call mpi_alltoall(VV(0,0,J),1,XY2ZY_2,
-     &        TMP(0,0,J),1,XY2ZY_1,MPI_COMM_Z,IERROR)
+         DO K=0,NZ-1
+            DO I=0,NXP-1
+               TMP2(I,K)=VV(I,K,J)
+            END DO
+         END DO
+         call mpi_alltoall(TMP2,1,XY2ZY_2,TMP_1A(0,0,J),1,XY2ZY_1,
+     &        MPI_COMM_Z,IERROR)
+         DO K=0,NZP-1
+           DO I=0,NX/2-1
+              TMP(I,K,J)=TMP_1A(I,K,J)
+           END DO
+           TMP(NX/2,K,J)=cmplx(0.d0,0.d0)
+         END DO
+         DO K=NZP,NZP+1
+           DO I=0,NX/2
+              TMP(I,K,J)=cmplx(0.d0,0.d0)
+           ENDDO
+         ENDDO
+
+
+!         call mpi_alltoall(VV(0,0,J),1,XY2ZY_2,
+!     &        TMP(0,0,J),1,XY2ZY_1,MPI_COMM_Z,IERROR)
       END DO
 
       ! FFT in X
@@ -1532,9 +1671,7 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
      *    TMP(0,0,J), 1, NX/2+1, V(0,0,J), 1, NX+2)
       END DO
 
-
       END SUBROUTINE
-
 
       SUBROUTINE INTEGRATE_Y_VAR(VAR,RES,COMM)
 
@@ -1559,7 +1696,6 @@ C$$$      ! write(130+RANK,'(2E25.15)') VV(0:NXP-1,0:NZ-1,1)
       RES=RES/LY
 
       END SUBROUTINE
-
 
       SUBROUTINE INTEGRATE_Z_VAR(VAR,RES,COMM)
 
