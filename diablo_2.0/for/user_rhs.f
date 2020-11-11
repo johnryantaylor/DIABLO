@@ -243,10 +243,12 @@ C Note, that each cell has the same volume, so we can just average over all poin
          end do
       end do
 ! Damp the mean gradient towards TH_0
+      if (RANKZ.eq.0) then
         do j=JSTART_TH(N),JEND_TH(N)
           CFTH(0,0,j,n)=CFTH(0,0,j,n)-SPONGE_SIGMA(j)
      &          *(CTH(0,0,j,n)-TH_0(J))
         end do
+      end if
 
       return
       end
