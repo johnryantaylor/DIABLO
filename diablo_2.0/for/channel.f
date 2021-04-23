@@ -2719,7 +2719,92 @@ C [  0  a3  b3   c3  0 ...
       RETURN
       END
 
-
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+      SUBROUTINE APPLY_BC_SCALAR_LOWER
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+C This subroutine is called after initializing the flow
+C It sets the appropriate boundary conditions including ghost cell values
+C  on the scalar fields in Fourier space
+      INCLUDE 'header'
+      INTEGER I,K,N
+      DO N=1,N_TH
+C Now, apply the boundary conditions depending on the type specified
+      IF (TH_BC_YMIN(N).EQ.0) THEN
+C Dirichlet
+C Start with zero
+         DO K=0,TNKZ
+           DO I=0,NXP-1
+             CTH(I,K,0,N)=0.d0
+             CTH(I,K,1,N)=0.d0
+           END DO
+         END DO
+C Now, set only the mean
+         IF (RANKZ.EQ.0) THEN
+           CTH(0,0,1,N)=TH_BC_YMIN_C1(N)
+           CTH(0,0,0,N)=TH_BC_YMIN_C1(N)
+         END IF
+      ELSE IF (TH_BC_YMIN(N).EQ.1) THEN
+C Neumann
+         DO K=0,TNKZ
+           DO I=0,NXP-1
+             CTH(I,K,1,N)=CTH(I,K,2,N)
+             CTH(I,K,0,N)=CTH(I,K,1,N)
+           END DO
+         END DO
+C Now, Apply BC to mean
+         IF (RANKZ.EQ.0) THEN
+           CTH(0,0,1,N)=CTH(0,0,2,N)-DY(2)*TH_BC_YMIN_C1(N)
+           CTH(0,0,0,N)=CTH(0,0,1,N)-DY(1)*TH_BC_YMIN_C1(N)
+         END IF
+      ELSE
+         STOP 'Error: TH_BC_YMIN must be 0, or 1'
+      END IF
+      END DO
+      RETURN
+      END
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+      SUBROUTINE APPLY_BC_SCALAR_UPPER
+C----*|--.---------.---------.---------.---------.---------.---------.-|--
+C This subroutine is called after initializing the flow
+C It sets the appropriate boundary conditions including ghost cell values
+C  on the scalar fields in Fourier space
+      INCLUDE 'header'
+      INTEGER I,K,N
+      DO N=1,N_TH
+! Now, apply boundary conditions to the top of the domain
+      IF (TH_BC_YMAX(N).EQ.0) THEN
+C Dirichlet
+C Start with zero
+         DO K=0,TNKZ
+           DO I=0,NXP-1
+             CTH(I,K,NY,N)=0.d0
+             CTH(I,K,NY+1,N)=0.d0
+           END DO
+         END DO
+C Now, set only the mean
+         IF (RANKZ.EQ.0) THEN
+           CTH(0,0,NY,N)=TH_BC_YMAX_C1(N)
+           CTH(0,0,NY+1,N)=TH_BC_YMAX_C1(N)
+         END IF
+      ELSE IF (TH_BC_YMAX(N).EQ.1) THEN
+C Neumann
+         DO K=0,TNKZ
+           DO I=0,NXP-1
+             CTH(I,K,NY,N)=CTH(I,K,NY-1,N)
+             CTH(I,K,NY+1,N)=CTH(I,K,NY,N)
+           END DO
+         END DO
+C Now, Apply BC to mean
+         IF (RANKZ.EQ.0) THEN
+           CTH(0,0,NY,N)=CTH(0,0,NY-1,N)+DY(NY)*TH_BC_YMAX_C1(N)
+           CTH(0,0,NY+1,N)=CTH(0,0,NY,N)+DY(NY)*TH_BC_YMAX_C1(N)
+         END IF
+      ELSE
+         STOP 'Error: TH_BC_YMAX must be 0, or 1'
+      END IF
+      END DO
+      RETURN
+      END
 
 
 
