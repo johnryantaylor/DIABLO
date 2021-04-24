@@ -38,9 +38,9 @@ USEROPTS = -O3 -cpp
 endif
 
 ifeq ($(LES),TRUE)
-LES_o = les.o
+LES_o = les.o les_th.o
 else
-LES_o = no_les.o
+LES_o = no_les.o 
 endif
 
 ALL2ALL=1
@@ -112,6 +112,8 @@ courant.o: courant.f channel.o fft.o $(MPI) header grid_def
 ifeq ($(LES),TRUE) 
 les.o: les.f fft.o header header_les grid_def
 	$(COMPILER) $(COMPOPTS) -c les.f
+les_th.o: les_th.f fft.o header header_les_th grid_def
+	$(COMPILER) $(COMPOPTS) -c les_th.f
 else
 no_les.o: dummy_code/no_les.f
 	$(COMPILER) $(COMPOPTS) -c dummy_code/no_les.f
