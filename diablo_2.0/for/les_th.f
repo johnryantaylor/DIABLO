@@ -20,8 +20,6 @@ C if for the subgrid scalar dissipation
  
       real*8 C_SMAG
 !      parameter (C_SMAG=0.13d0)
-!      parameter (C_SMAG=0.01d0)
-!      parameter (C_SMAG=0.0992d0)
       parameter (C_SMAG=0.0433d0)
       real*8 C_AMD
       parameter (C_AMD=0.2887d0) 
@@ -62,31 +60,8 @@ C Apply Boundary conditions to velocity field
 ! If we are using Neuman boundary conditions, over-write the values of the
 ! velocity at the ghost cells so that the LES model doesn't use the large
 ! velocity gradient
-! Does not yet include Neuman boundary condition for scalar
       CALL APPLY_BC_LES
       CALL APPLY_BC_SCALAR_LES
-
-! First, for all models, apply boundary conditions to the velocity field
-! (fill ghost cells) to ensure accurate calculation of gradients
-C Apply Boundary conditions to velocity field
-!      IF (USE_MPI) THEN
-!        CALL APPLY_BC_VEL_MPI
-!        CALL GHOST_CHAN_MPI
-!      ELSE
-!        CALL APPLY_BC_VEL_LOWER
-!        CALL APPLY_BC_VEL_UPPER
-!      END IF
-
-!      IF (USE_MPI) THEN
-!        CALL APPLY_BC_TH_MPI(MATL,MATD,MATU,VEC,N)
-!        CALL GHOST_CHAN_MPI
-!      END IF
-
-! If we are using Neuman boundary conditions, over-write the values of the
-! velocity at the ghost cells so that the LES model doesn't use the large
-! velocity gradient
-! Does not yet include Neuman boundary condition for scalar
-!      CALL APPLY_BC_LES
 
       if (LES_MODEL_TYPE.EQ.1) then
 !     Constant Smagorinsky model
@@ -377,12 +352,6 @@ C Apply Boundary conditions to velocity field
           end do
           end do
         end do
-
-!        do j=0,NY+1
-!          do i=0,NXM
-!            KAPPA_T_mean(j)=KAPPA_T_mean(j)+KAPPA_T(I,5,J,1)
-!          end do
-!        end do
 
       call mpi_allreduce(mpi_in_place,S1_mean,NY+2,MPI_DOUBLE_PRECISION,
      &     MPI_SUM,MPI_COMM_Z,ierror)
