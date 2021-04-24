@@ -1,0 +1,68 @@
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+! Parameters for Large Eddy Simulation
+!----*|--.---------.---------.---------.---------.---------.---------.-|-------|
+
+! Variables for dynamic Smagrinsky
+      REAL*8 TEMP_th(0:NX+1,0:NZP+1,0:NY+1)
+      COMPLEX*16 CTEMP_th(0:NXP,0:NZ+1,0:NY+1)
+      REAL*8 S1_th(0:NX+1,0:NZP+1,0:NY+1)
+      COMPLEX*16 CS1_th(0:NXP,0:NZ+1,0:NY+1)
+
+! Variables for plane-averaged momentum budget
+      real*8 NU_U1(0:NY+1)
+      real*8 NU_U3(0:NY+1)
+
+      REAL*8 cross
+      REAL*8 beta_sgs
+
+      REAL*8 du1dx(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du2dx(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du3dx(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du1dy(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du2dy(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du3dy(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du1dz(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du2dz(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 du3dz(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 dthetadx(0:NX+1,0:NZP+1,0:NY+1,1:N_TH)
+      REAL*8 dthetady(0:NX+1,0:NZP+1,0:NY+1,1:N_TH)
+      REAL*8 dthetadz(0:NX+1,0:NZP+1,0:NY+1,1:N_TH)
+!======dthetady_YF at GYF points in physical space=====!
+!      REAL*8 dthetady_YF(0:NX+1,0:NZP+1,0:NY+1,1:N_TH)
+
+      COMPLEX*16 Cdu1dx(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu2dx(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu3dx(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu1dy(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu2dy(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu3dy(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu1dz(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu2dz(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdu3dz(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Cdthetadx(0:NXP,0:NZ+1,0:NY+1,1:N_TH)
+      COMPLEX*16 Cdthetady(0:NXP,0:NZ+1,0:NY+1,1:N_TH)
+      COMPLEX*16 Cdthetadz(0:NXP,0:NZ+1,0:NY+1,1:N_TH)
+!======Cdthetady_YF at GYF points in fourier space=====!
+!      COMPLEX*16 Cdthetady_YF(0:NXP,0:NZ+1,0:NY+1,1:N_TH)
+
+c      EQUIVALENCE (TEMP_th,CTEMP_th)
+c     &         ,(S1_th,CS1_th)
+c     &         ,(du1dx,Cdu1dx)
+c     &         ,(du2dx,Cdu2dx)
+c     &         ,(du3dx,Cdu3dx)
+c     &         ,(du1dy,Cdu1dy)
+c     &         ,(du2dy,Cdu2dy)
+c     &         ,(du3dy,Cdu3dy)
+c     &         ,(du1dz,Cdu1dz)
+c     &         ,(du2dz,Cdu2dz)
+c     &         ,(du3dz,Cdu3dz)
+c     &         ,(dthetadx,Cdthetadx)
+c     &         ,(dthetady,Cdthetady)
+c     &         ,(dthetadz,Cdthetadz)
+
+
+      COMMON /LES_VARS_3/ beta_sgs, TEMP_th, S1_th
+      COMMON /LES_VARS_3/ du1dx, du2dx, du3dx, du1dy, du2dy, du3dy
+      COMMON /LES_VARS_3/ du1dz, du2dz, du3dz
+      COMMON /LES_VARS_3/ dthetadx, dthetady, dthetadz
+
