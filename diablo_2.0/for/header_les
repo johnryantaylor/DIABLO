@@ -11,6 +11,7 @@
       real*8 NU_U3(0:NY+1)
 
       REAL*8 cross
+      REAL*8 beta_sgs
 
       REAL*8 Sij1(0:NX+1,0:NZP+1,0:NY+1)
       REAL*8 Sij2(0:NX+1,0:NZP+1,0:NY+1)
@@ -26,15 +27,50 @@
       COMPLEX*16 CSij5(0:NXP,0:NZ+1,0:NY+1)
       COMPLEX*16 CSij6(0:NXP,0:NZ+1,0:NY+1)
 
-      EQUIVALENCE (TEMP,CTEMP)
-     &         ,(Sij1,CSij1)
-     &         ,(Sij2,CSij2)
-     &         ,(Sij3,CSij3)
-     &         ,(Sij4,CSij4)
-     &         ,(Sij5,CSij5)
-     &         ,(Sij6,CSij6)
+      REAL*8 SIij1(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 SIij2(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 SIij3(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 SIij4(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 SIij5(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 SIij6(0:NX+1,0:NZP+1,0:NY+1)
+
+      COMPLEX*16 CSIij1(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSIij2(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSIij3(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSIij4(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSIij5(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 CSIij6(0:NXP,0:NZ+1,0:NY+1)
+
+      REAL*8 omgij4(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 omgij5(0:NX+1,0:NZP+1,0:NY+1)
+      REAL*8 omgij6(0:NX+1,0:NZP+1,0:NY+1)
+
+      COMPLEX*16 Comgij4(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Comgij5(0:NXP,0:NZ+1,0:NY+1)
+      COMPLEX*16 Comgij6(0:NXP,0:NZ+1,0:NY+1)
+
+!      EQUIVALENCE (TEMP,CTEMP)
+!     &         ,(Sij1,CSij1)
+!     &         ,(Sij2,CSij2)
+!     &         ,(Sij3,CSij3)
+!     &         ,(Sij4,CSij4)
+!     &         ,(Sij5,CSij5)
+!     &         ,(Sij6,CSij6)
+!     &         ,(SIij1,CSIij1)
+!     &         ,(SIij2,CSIij2)
+!     &         ,(SIij3,CSIij3)
+!     &         ,(SIij4,CSIij4)
+!     &         ,(SIij5,CSIij5)
+!     &         ,(SIij6,CSIij6)
+!     &         ,(omgij4,Comgij4)
+!     &         ,(omgij5,Comgij5)
+!     &         ,(omgij6,Comgij6)
 
       COMMON /LES_VARS_2/ Sij1, Sij2, Sij3, Sij4, Sij5, Sij6, TEMP
-
-
+      COMMON /LES_VARS_2C/ CSij1,CSij2,CSij3,CSij4,CSij5,CSij6,CTEMP
+      COMMON /LES_VARS_3/ omgij4, omgij5, omgij6
+      COMMON /LES_VARS_3C/ Comgij4, Comgij5, Comgij6
+      COMMON /LES_VARS_4/ SIij1, SIij2, SIij3, SIij4, SIij5, SIij6
+      COMMON /LES_VARS_4C/ CSIij1,CSIij2,CSIij3,CSIij4,CSIij5,CSIij6
+      COMMON /LES_VARS_5/ beta_sgs
 
