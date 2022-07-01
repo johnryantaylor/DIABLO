@@ -21,7 +21,7 @@ C         CREATE_FLOW_TH(1)  Create new field or Read from DIABLO_TH.START
 C         FILTER_TH(1)         FILTER_INT(1)     (If and how often to filter)
                .FALSE.              10
 C         RI_TAU(1)          PR(1)      
-             0.15              1.0        
+             0.05              1.0        
 
 
 C When including scalar advection, include 6 lines like the following for each scalar
