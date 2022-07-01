@@ -3,7 +3,7 @@
 
 % User settings....
 % Set the run directory
-base_dir='/local/data/public/jrt51/testing';
+base_dir='../../KH_test';
 NY=65; % Here, NY should match the value in grid_def.all
 N_TH=1; % The number of scalars
 Re = 1000; NU=1/Re; % Enter the Reynolds number or viscosity from input.dat
