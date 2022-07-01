@@ -1,13 +1,13 @@
 % This script shows how to load in 2D slices and make a movie of the simulation output
 % Run after readmean.m
-LX=1000;
-NX=512;
+LX=30;
+NX=128;
 
 x=linspace(0,LX,NX);
 
 filename=[base_dir '/movie.h5'];
 
-drhodx=3e-8;
+drhodx=0;
 
 for k=1:nk
 k
@@ -40,7 +40,7 @@ title(['time=' num2str(tii(k)/3600) ' hours']);
 
 axis tight
 shading interp
-colormap(jet(256));
+colormap(parula(256));
 colorbar
 M(k)=getframe(gcf);
 clf;
